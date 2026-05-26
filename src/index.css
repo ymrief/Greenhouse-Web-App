@@ -1,0 +1,49 @@
+/* 1. Import font eksternal dari Google Fonts paling atas */
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@700&family=Open+Sans:wght@400;600&family=Roboto+Mono:wght@500&display=swap');
+
+/* 2. Import Tailwind CSS */
+@import 'tailwindcss';
+
+/* 3. Mendefinisikan Variabel Global */
+:root {
+    --font-utama: 'Open Sans', sans-serif;
+    --font-judul: 'Montserrat', sans-serif;
+    --font-angka:
+        'Roboto Mono', monospace; /* Cocok untuk angka pembacaan sensor/motor */
+
+    --warna-teks: #333333;
+    --warna-peringatan: #e74c3c;
+    --warna-aman: #2ecc71;
+}
+
+/* Terapkan font utama ke seluruh body aplikasi */
+body {
+    font-family: var(--font-utama);
+    color: var(--warna-teks);
+    background-color: #f4f7f6;
+    margin: 0;
+    padding: 0;
+}
+
+/* Buat Utility Classes (Kelas Serbaguna) untuk digunakan di file JSX mana pun */
+.teks-judul-besar {
+    font-family: var(--font-judul);
+    font-size: 2.5rem;
+    font-weight: 700;
+}
+
+.angka-digital {
+    font-family: var(--font-angka);
+    font-size: 1.5rem;
+    letter-spacing: 2px;
+}
+
+.status-berjalan {
+    color: var(--warna-aman);
+    font-weight: 600;
+}
+
+.status-berhenti {
+    color: var(--warna-peringatan);
+    font-weight: 600;
+}
