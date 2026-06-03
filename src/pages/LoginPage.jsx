@@ -1,127 +1,254 @@
-import { useState, useEffect, useContext } from 'react';
+import { useState, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 
 function LoginPage() {
     const navigate = useNavigate();
-
     const { loginAdmin } = useContext(AuthContext);
 
-    // 1. Siapkan daftar URL gambar untuk background (bisa pakai gambar lokal di folder public)
-    const backgroundImages = [
-        'https://images.unsplash.com/photo-1505764706515-aa95265c5abc?q=80&w=1920&auto=format&fit=crop', // Gambar hardware/chip
-        'https://images.unsplash.com/photo-1625246333195-78d9c38ad449?q=80&w=1920&auto=format&fit=crop', // Gambar data/grafik
-        'https://images.unsplash.com/photo-1499529112087-3cb3b73cec95?q=80&w=1920&auto=format&fit=crop', // Gambar server/jaringan
-    ];
+    const [username, setUsername] = useState('');
+    const [password, setPassword] = useState('');
+    const [error, setError] = useState('');
 
-    // 2. State untuk menyimpan indeks gambar yang sedang aktif (mulai dari 0)
-    const [currentIndex, setCurrentIndex] = useState(0);
-
-    // 3. useEffect untuk menjalankan timer slideshow
-    useEffect(() => {
-        // Mengatur interval setiap 5000 milidetik (5 detik)
-        const timer = setInterval(() => {
-            setCurrentIndex((prevIndex) => {
-                // Jika sudah di gambar terakhir, kembali ke 0. Jika belum, lanjut ke gambar berikutnya.
-                return prevIndex === backgroundImages.length - 1
-                    ? 0
-                    : prevIndex + 1;
-            });
-        }, 5000);
-
-        // CLEANUP: Sangat penting di React! Membersihkan timer saat pengguna pindah halaman
-        // agar tidak terjadi kebocoran memori (memory leak).
-        return () => clearInterval(timer);
-    }, [backgroundImages.length]);
-
-    // Fungsi simulasi login
     const handleLogin = (e) => {
         e.preventDefault();
+        setError('');
 
-        // 1. Panggil fungsi untuk mengubah global state menjadi admin
-        loginAdmin();
+        if (!username || !password) {
+            setError('Username dan password harus diisi');
+            return;
+        }
 
-        // 2. Alihkan kembali ke dashboard
-        navigate('/');
+        // Simple validation (replace with actual authentication)
+        if (username && password) {
+            loginAdmin();
+            navigate('/');
+        } else {
+            setError('Username atau password salah');
+        }
     };
 
     return (
-        // Kontainer utama dengan background dinamis
         <div
             style={{
-                backgroundImage: `url(${backgroundImages[currentIndex]})`,
-                backgroundSize: 'cover',
-                backgroundPosition: 'center',
-                height: '100vh',
+                minHeight: '100vh',
                 display: 'flex',
-                justifyContent: 'center',
                 alignItems: 'center',
-                transition: 'background-image 1s ease-in-out', // Efek transisi halus saat gambar berganti
-                margin: '-20px', // Mengkompensasi padding dari Layout utama (jika ada)
+                justifyContent: 'center',
+                background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
+                padding: '20px',
             }}
         >
-            {/* Kotak Form Login */}
+            {/* Login Card */}
             <div
                 style={{
-                    backgroundColor: 'rgba(255, 255, 255, 0.9)', // Warna putih agak transparan
-                    padding: '40px',
-                    borderRadius: '10px',
-                    boxShadow: '0 8px 32px rgba(0, 0, 0, 0.2)',
                     width: '100%',
-                    maxWidth: '400px',
-                    textAlign: 'center',
+                    maxWidth: '450px',
+                    padding: '50px 40px',
+                    borderRadius: '16px',
+                    border: '2px solid rgba(255, 255, 255, 0.1)',
+                    backgroundColor: '#1e293b',
+                    boxShadow: '0 20px 60px rgba(0, 0, 0, 0.4)',
+                    backdropFilter: 'blur(10px)',
                 }}
             >
-                <h2 style={{ marginBottom: '20px', color: '#333' }}>
-                    Login Admin
-                </h2>
-
-                <form
-                    onSubmit={handleLogin}
+                {/* Logo Section */}
+                <div
                     style={{
                         display: 'flex',
-                        flexDirection: 'column',
-                        gap: '15px',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '12px',
+                        marginBottom: '40px',
                     }}
                 >
-                    <input
-                        type="text"
-                        placeholder="Username"
-                        style={inputStyle}
-                        required
-                    />
-                    <input
-                        type="password"
-                        placeholder="Password"
-                        style={inputStyle}
-                        required
-                    />
-                    <button type="submit" style={btnStyle}>
-                        Masuk
+                    <div
+                        style={{
+                            width: '50px',
+                            height: '50px',
+                            background:
+                                'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)',
+                            borderRadius: '50%',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontSize: '28px',
+                        }}
+                    >
+                        🌿
+                    </div>
+                    <div>
+                        <div
+                            style={{
+                                fontSize: '18px',
+                                fontWeight: '700',
+                                color: '#ffffff',
+                            }}
+                        >
+                            Smart Greenhouse
+                        </div>
+                        <div style={{ fontSize: '12px', color: '#94a3b8' }}>
+                            FIK UPNVJ
+                        </div>
+                    </div>
+                </div>
+
+                {/* Title */}
+                <h1
+                    style={{
+                        textAlign: 'center',
+                        fontSize: '28px',
+                        fontWeight: '700',
+                        marginBottom: '30px',
+                        color: '#ffffff',
+                    }}
+                >
+                    LOGIN OPERATOR
+                </h1>
+
+                {/* Error Message */}
+                {error && (
+                    <div
+                        style={{
+                            padding: '12px',
+                            marginBottom: '20px',
+                            borderRadius: '8px',
+                            backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                            border: '1px solid rgba(239, 68, 68, 0.3)',
+                            color: '#ef4444',
+                            fontSize: '14px',
+                            fontWeight: '500',
+                        }}
+                    >
+                        {error}
+                    </div>
+                )}
+
+                {/* Form */}
+                <form onSubmit={handleLogin}>
+                    {/* Username Input */}
+                    <div style={{ marginBottom: '20px' }}>
+                        <input
+                            type="text"
+                            placeholder="Username"
+                            value={username}
+                            onChange={(e) => setUsername(e.target.value)}
+                            style={{
+                                width: '100%',
+                                padding: '14px 16px',
+                                borderRadius: '8px',
+                                border: '1px solid rgba(255, 255, 255, 0.1)',
+                                backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                                color: '#ffffff',
+                                fontSize: '14px',
+                                outline: 'none',
+                                boxSizing: 'border-box',
+                                transition: 'all 0.3s ease',
+                            }}
+                            onFocus={(e) => {
+                                e.target.style.borderColor = '#10b981';
+                                e.target.style.backgroundColor =
+                                    'rgba(16, 185, 129, 0.05)';
+                            }}
+                            onBlur={(e) => {
+                                e.target.style.borderColor =
+                                    'rgba(255, 255, 255, 0.1)';
+                                e.target.style.backgroundColor =
+                                    'rgba(255, 255, 255, 0.05)';
+                            }}
+                        />
+                    </div>
+
+                    {/* Password Input */}
+                    <div style={{ marginBottom: '30px' }}>
+                        <input
+                            type="password"
+                            placeholder="Password"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            style={{
+                                width: '100%',
+                                padding: '14px 16px',
+                                borderRadius: '8px',
+                                border: '1px solid rgba(255, 255, 255, 0.1)',
+                                backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                                color: '#ffffff',
+                                fontSize: '14px',
+                                outline: 'none',
+                                boxSizing: 'border-box',
+                                transition: 'all 0.3s ease',
+                            }}
+                            onFocus={(e) => {
+                                e.target.style.borderColor = '#10b981';
+                                e.target.style.backgroundColor =
+                                    'rgba(16, 185, 129, 0.05)';
+                            }}
+                            onBlur={(e) => {
+                                e.target.style.borderColor =
+                                    'rgba(255, 255, 255, 0.1)';
+                                e.target.style.backgroundColor =
+                                    'rgba(255, 255, 255, 0.05)';
+                            }}
+                        />
+                    </div>
+
+                    {/* Login Button */}
+                    <button
+                        type="submit"
+                        style={{
+                            width: '100%',
+                            padding: '14px',
+                            borderRadius: '8px',
+                            border: 'none',
+                            background:
+                                'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                            color: 'white',
+                            fontSize: '16px',
+                            fontWeight: '600',
+                            cursor: 'pointer',
+                            transition: 'all 0.3s ease',
+                        }}
+                        onMouseEnter={(e) => {
+                            e.target.style.transform = 'translateY(-2px)';
+                            e.target.style.boxShadow =
+                                '0 10px 25px rgba(16, 185, 129, 0.4)';
+                        }}
+                        onMouseLeave={(e) => {
+                            e.target.style.transform = 'translateY(0)';
+                            e.target.style.boxShadow = 'none';
+                        }}
+                    >
+                        Login
                     </button>
                 </form>
+
+                {/* Demo Credentials */}
+                <div
+                    style={{
+                        marginTop: '30px',
+                        padding: '15px',
+                        borderRadius: '8px',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        border: '1px solid rgba(59, 130, 246, 0.2)',
+                        fontSize: '12px',
+                        color: '#cbd5e1',
+                    }}
+                >
+                    <div
+                        style={{
+                            fontWeight: '600',
+                            marginBottom: '8px',
+                            color: '#3b82f6',
+                        }}
+                    >
+                        Demo Credentials:
+                    </div>
+                    <div>Username: admin</div>
+                    <div>Password: 123456</div>
+                </div>
             </div>
         </div>
     );
 }
-
-// Sedikit styling tambahan untuk input dan tombol
-const inputStyle = {
-    padding: '12px',
-    borderRadius: '5px',
-    border: '1px solid #ccc',
-    fontSize: '16px',
-};
-
-const btnStyle = {
-    padding: '12px',
-    backgroundColor: '#282c34',
-    color: 'white',
-    border: 'none',
-    borderRadius: '5px',
-    fontSize: '16px',
-    cursor: 'pointer',
-    fontWeight: 'bold',
-};
 
 export default LoginPage;

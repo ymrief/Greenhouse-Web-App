@@ -1,34 +1,46 @@
-function MonitoringCard({ judul, nilai, status }) {
-    // Menentukan warna background berdasarkan status (opsional, untuk visualisasi)
-    const isWarning = status === 'MENYALA' || nilai < 50;
-
+function MonitoringCard({ judul, nilai, status, icon, large = false }) {
     const cardStyle = {
-        padding: '20px',
-        borderRadius: '8px',
-        backgroundColor: 'white',
-        boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
-        minWidth: '200px',
-        borderTop: isWarning ? '4px solid #f44336' : '4px solid #4CAF50',
+        padding: large ? '30px' : '20px',
+        borderRadius: '12px',
+        backgroundColor: '#1e293b',
+        border: '1px solid rgba(255, 255, 255, 0.1)',
+        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)',
+        minWidth: large ? '100%' : '200px',
+    };
+
+    const titleStyle = {
+        margin: '0 0 15px 0',
+        color: '#cbd5e1',
+        fontSize: large ? '18px' : '14px',
+        fontWeight: '500',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '8px',
+    };
+
+    const valueStyle = {
+        fontSize: large ? '48px' : '28px',
+        fontWeight: 'bold',
+        color: '#10b981',
+        fontFamily: "'Roboto Mono', monospace",
+    };
+
+    const statusStyle = {
+        fontSize: large ? '18px' : '12px',
+        fontWeight: 'normal',
+        color: '#94a3b8',
+        marginLeft: '8px',
     };
 
     return (
         <div style={cardStyle}>
-            <h3
-                style={{
-                    margin: '0 0 10px 0',
-                    color: '#555',
-                    fontSize: '16px',
-                }}
-            >
+            <div style={titleStyle}>
+                <span style={{ fontSize: '20px' }}>{icon}</span>
                 {judul}
-            </h3>
-            <div
-                style={{ fontSize: '24px', fontWeight: 'bold', color: '#333' }}
-            >
-                {nilai}{' '}
-                <span style={{ fontSize: '14px', fontWeight: 'normal' }}>
-                    {status}
-                </span>
+            </div>
+            <div>
+                <span style={valueStyle}>{nilai}</span>
+                <span style={statusStyle}>{status}</span>
             </div>
         </div>
     );

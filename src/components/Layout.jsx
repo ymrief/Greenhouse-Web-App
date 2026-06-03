@@ -9,10 +9,19 @@ function Layout() {
                 display: 'flex',
                 flexDirection: 'column',
                 minHeight: '100vh',
+                backgroundColor: '#0f172a',
             }}
         >
             <Header />
-            <main style={{ flex: 1, padding: '20px' }}>
+            <main
+                style={{
+                    flex: 1,
+                    padding: '30px 40px',
+                    backgroundColor: '#0f172a',
+                    color: '#ffffff',
+                    overflow: 'auto',
+                }}
+            >
                 <Outlet />
             </main>
             <Footer />

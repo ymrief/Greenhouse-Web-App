@@ -3,31 +3,31 @@ import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 
 function Header() {
-    // Mengambil status dan fungsi dari global state (Context)
     const { isAdmin, logoutAdmin } = useContext(AuthContext);
     const navigate = useNavigate();
-
-    // State untuk mengontrol Sidebar (Terbuka/Tertutup)
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+    const [isProfileOpen, setIsProfileOpen] = useState(false);
 
     const handleLogout = () => {
         logoutAdmin();
-        setIsSidebarOpen(false); // Memastikan sidebar tertutup saat admin logout
+        setIsSidebarOpen(false);
+        setIsProfileOpen(false);
         navigate('/');
     };
 
     return (
         <>
-            {/* --- BAGIAN HEADER UTAMA --- */}
+            {/* Header Utama */}
             <header style={headerStyle}>
+                {/* Logo dan Burger Menu */}
                 <div
                     style={{
                         display: 'flex',
                         alignItems: 'center',
-                        gap: '15px',
+                        gap: '20px',
                     }}
                 >
-                    {/* Tombol Burger hanya muncul jika yang login adalah Admin */}
+                    {/* Burger Button untuk Admin */}
                     {isAdmin && (
                         <button
                             style={burgerBtnStyle}
@@ -36,40 +36,117 @@ function Header() {
                             ☰
                         </button>
                     )}
-                    <div className="logo">
-                        <img
-                            src="src\assets\LOGO_UPN.png"
-                            alt="Logo UPN"
-                            width="40"
-                            height="40"
-                        />
-                    </div>
+
+                    {/* Logo */}
+                    <Link to="/" style={{ textDecoration: 'none' }}>
+                        <div
+                            style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '10px',
+                            }}
+                        >
+                            <div
+                                style={{
+                                    width: '40px',
+                                    height: '40px',
+                                    background:
+                                        'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)',
+                                    borderRadius: '50%',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    fontSize: '24px',
+                                }}
+                            >
+                                🌿
+                            </div>
+                            <div>
+                                <div
+                                    style={{
+                                        fontSize: '14px',
+                                        fontWeight: '700',
+                                        color: '#ffffff',
+                                    }}
+                                >
+                                    Smart Greenhouse
+                                </div>
+                                <div
+                                    style={{
+                                        fontSize: '12px',
+                                        color: '#94a3b8',
+                                    }}
+                                >
+                                    FIK UPNVJ
+                                </div>
+                            </div>
+                        </div>
+                    </Link>
                 </div>
 
-                <nav>
-                    <Link to="/" style={linkStyle}>
-                        Dashboard
-                    </Link>
-                    <Link to="/about" style={linkStyle}>
-                        About
-                    </Link>
+                {/* Navigation Links */}
+                <nav
+                    style={{
+                        display: 'flex',
+                        gap: '20px',
+                        alignItems: 'center',
+                    }}
+                >
+                    {!isAdmin && (
+                        <>
+                            <Link to="/" style={navLinkStyle}>
+                                Dashboard
+                            </Link>
+                            <Link to="/about" style={navLinkStyle}>
+                                Tentang Projek
+                            </Link>
+                        </>
+                    )}
                 </nav>
 
-                {/* Perubahan dinamis tombol Login/Logout */}
-                {isAdmin ? (
-                    <button onClick={handleLogout} style={logoutBtnStyle}>
-                        Logout
-                    </button>
-                ) : (
-                    <Link to="/login">
-                        <button style={loginBtnStyle}>Login Admin</button>
-                    </Link>
-                )}
+                {/* Right Section - Login/Profile */}
+                <div
+                    style={{
+                        display: 'flex',
+                        gap: '20px',
+                        alignItems: 'center',
+                    }}
+                >
+                    {isAdmin ? (
+                        <div style={{ position: 'relative' }}>
+                            <button
+                                style={profileBtnStyle}
+                                onClick={() => setIsProfileOpen(!isProfileOpen)}
+                            >
+                                👤
+                            </button>
+                            {isProfileOpen && (
+                                <div style={profileMenuStyle}>
+                                    <div style={profileMenuItemStyle}>
+                                        <span style={{ fontWeight: '600' }}>
+                                            Operator
+                                        </span>
+                                    </div>
+                                    <button
+                                        onClick={handleLogout}
+                                        style={logoutMenuItemStyle}
+                                    >
+                                        Logout
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    ) : (
+                        <Link to="/login">
+                            <button style={loginBtnStyle}>
+                                Login Operator
+                            </button>
+                        </Link>
+                    )}
+                </div>
             </header>
 
-            {/* --- BAGIAN SIDEBAR MELAYANG --- */}
-
-            {/* 1. Backdrop (Lapisan Hitam Transparan) */}
+            {/* Sidebar untuk Admin */}
             {isSidebarOpen && (
                 <div
                     style={backdropStyle}
@@ -77,7 +154,6 @@ function Header() {
                 ></div>
             )}
 
-            {/* 2. Panel Sidebar Kanan */}
             <div
                 style={{
                     ...sidebarStyle,
@@ -86,14 +162,26 @@ function Header() {
                         : 'translateX(-100%)',
                 }}
             >
+                {/* Header Sidebar */}
                 <div
                     style={{
                         display: 'flex',
                         justifyContent: 'space-between',
                         alignItems: 'center',
+                        marginBottom: '30px',
+                        paddingBottom: '20px',
+                        borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
                     }}
                 >
-                    <h2 style={{ margin: 0 }}>Menu Admin</h2>
+                    <h2
+                        style={{
+                            margin: 0,
+                            fontSize: '20px',
+                            fontWeight: '700',
+                        }}
+                    >
+                        Smart Greenhouse
+                    </h2>
                     <button
                         onClick={() => setIsSidebarOpen(false)}
                         style={closeBtnStyle}
@@ -102,34 +190,33 @@ function Header() {
                     </button>
                 </div>
 
-                {/* Daftar Menu Navigasi Admin */}
+                {/* Menu Items */}
                 <ul
                     style={{
                         listStyle: 'none',
                         padding: 0,
-                        marginTop: '30px',
                         display: 'flex',
                         flexDirection: 'column',
-                        gap: '5px',
+                        gap: '10px',
                     }}
                 >
                     <NavLink
                         to="/"
-                        end // Penanda 'end' memastikan ini hanya aktif jika URL persis "/", tidak aktif jika "/device"
-                        onClick={() => setIsSidebarOpen(false)} // Tutup sidebar otomatis saat diklik
+                        end
+                        onClick={() => setIsSidebarOpen(false)}
                         style={({ isActive }) => ({
                             ...menuItemStyle,
-                            // Gaya tambahan saat menu ini aktif (highlight)
-                            backgroundColor: isActive ? '#333' : 'transparent',
+                            backgroundColor: isActive
+                                ? 'rgba(16, 185, 129, 0.15)'
+                                : 'transparent',
                             borderLeft: isActive
-                                ? '4px solid #4CAF50'
+                                ? '4px solid #10b981'
                                 : '4px solid transparent',
-                            color: isActive ? '#4CAF50' : 'white',
-                            paddingLeft: isActive ? '20px' : '15px', // Sedikit geser teksnya saat aktif
-                            transition: 'all 0.2s',
+                            color: isActive ? '#10b981' : '#cbd5e1',
+                            paddingLeft: isActive ? '16px' : '20px',
                         })}
                     >
-                        Dashboard
+                        📊 Dashboard
                     </NavLink>
 
                     <NavLink
@@ -137,16 +224,17 @@ function Header() {
                         onClick={() => setIsSidebarOpen(false)}
                         style={({ isActive }) => ({
                             ...menuItemStyle,
-                            backgroundColor: isActive ? '#333' : 'transparent',
+                            backgroundColor: isActive
+                                ? 'rgba(16, 185, 129, 0.15)'
+                                : 'transparent',
                             borderLeft: isActive
-                                ? '4px solid #4CAF50'
+                                ? '4px solid #10b981'
                                 : '4px solid transparent',
-                            color: isActive ? '#4CAF50' : 'white',
-                            paddingLeft: isActive ? '20px' : '15px',
-                            transition: 'all 0.2s',
+                            color: isActive ? '#10b981' : '#cbd5e1',
+                            paddingLeft: isActive ? '16px' : '20px',
                         })}
                     >
-                        Device
+                        🎛️ Device
                     </NavLink>
 
                     <NavLink
@@ -154,16 +242,17 @@ function Header() {
                         onClick={() => setIsSidebarOpen(false)}
                         style={({ isActive }) => ({
                             ...menuItemStyle,
-                            backgroundColor: isActive ? '#333' : 'transparent',
+                            backgroundColor: isActive
+                                ? 'rgba(16, 185, 129, 0.15)'
+                                : 'transparent',
                             borderLeft: isActive
-                                ? '4px solid #4CAF50'
+                                ? '4px solid #10b981'
                                 : '4px solid transparent',
-                            color: isActive ? '#4CAF50' : 'white',
-                            paddingLeft: isActive ? '20px' : '15px',
-                            transition: 'all 0.2s',
+                            color: isActive ? '#10b981' : '#cbd5e1',
+                            paddingLeft: isActive ? '16px' : '20px',
                         })}
                     >
-                        History
+                        📋 History
                     </NavLink>
                 </ul>
             </div>
@@ -171,41 +260,18 @@ function Header() {
     );
 }
 
-// --- PENGATURAN CSS OBJECT ---
-
+/* Styles */
 const headerStyle = {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: '1rem 2rem',
-    backgroundColor: '#282c34',
+    padding: '16px 40px',
+    backgroundColor: '#1e293b',
     color: 'white',
-    position: 'sticky', // Membuat header tetap di atas saat di-scroll
+    borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+    position: 'sticky',
     top: 0,
     zIndex: 1000,
-};
-
-const linkStyle = {
-    color: 'white',
-    margin: '0 15px',
-    textDecoration: 'none',
-};
-
-const loginBtnStyle = {
-    padding: '8px 16px',
-    cursor: 'pointer',
-    borderRadius: '4px',
-    border: 'none',
-};
-
-const logoutBtnStyle = {
-    padding: '8px 16px',
-    cursor: 'pointer',
-    borderRadius: '4px',
-    border: '1px solid white',
-    backgroundColor: 'transparent',
-    color: 'white',
-    fontWeight: 'bold',
 };
 
 const burgerBtnStyle = {
@@ -215,9 +281,81 @@ const burgerBtnStyle = {
     fontSize: '24px',
     cursor: 'pointer',
     padding: '0',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
 };
 
-// CSS Untuk Backdrop Lapisan Hitam (Z-Index di bawah Sidebar, di atas Header)
+const navLinkStyle = {
+    color: '#cbd5e1',
+    textDecoration: 'none',
+    fontSize: '14px',
+    fontWeight: '500',
+    padding: '8px 16px',
+    borderRadius: '6px',
+    transition: 'all 0.3s ease',
+    cursor: 'pointer',
+};
+
+const profileBtnStyle = {
+    background: 'rgba(255, 255, 255, 0.1)',
+    border: '1px solid rgba(255, 255, 255, 0.2)',
+    color: 'white',
+    width: '40px',
+    height: '40px',
+    borderRadius: '50%',
+    cursor: 'pointer',
+    fontSize: '18px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    transition: 'all 0.3s ease',
+};
+
+const loginBtnStyle = {
+    padding: '10px 24px',
+    backgroundColor: '#3b82f6',
+    color: 'white',
+    border: 'none',
+    borderRadius: '6px',
+    fontWeight: '600',
+    cursor: 'pointer',
+    fontSize: '14px',
+    transition: 'all 0.3s ease',
+};
+
+const profileMenuStyle = {
+    position: 'absolute',
+    top: '50px',
+    right: '0',
+    background: '#1e293b',
+    border: '1px solid rgba(255, 255, 255, 0.1)',
+    borderRadius: '8px',
+    minWidth: '200px',
+    boxShadow: '0 10px 25px rgba(0, 0, 0, 0.3)',
+    zIndex: 1001,
+    overflow: 'hidden',
+};
+
+const profileMenuItemStyle = {
+    padding: '12px 16px',
+    color: '#cbd5e1',
+    borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+    fontSize: '14px',
+};
+
+const logoutMenuItemStyle = {
+    width: '100%',
+    padding: '12px 16px',
+    background: '#ef4444',
+    color: 'white',
+    border: 'none',
+    cursor: 'pointer',
+    fontSize: '14px',
+    fontWeight: '600',
+    transition: 'all 0.3s ease',
+};
+
 const backdropStyle = {
     position: 'fixed',
     top: 0,
@@ -228,35 +366,39 @@ const backdropStyle = {
     zIndex: 1999,
 };
 
-// CSS Untuk Panel Sidebar (Z-Index tertinggi)
 const sidebarStyle = {
     position: 'fixed',
     top: 0,
     left: 0,
     width: '280px',
     height: '100vh',
-    backgroundColor: '#1e2229',
+    backgroundColor: '#0f172a',
     color: 'white',
     padding: '20px',
-    boxShadow: '-4px 0 15px rgba(0, 0, 0, 0.3)',
+    boxShadow: '4px 0 15px rgba(0, 0, 0, 0.3)',
     zIndex: 2000,
-    transition: 'transform 0.3s ease-in-out', // Animasi meluncur
+    transition: 'transform 0.3s ease-in-out',
+    borderRight: '1px solid rgba(255, 255, 255, 0.1)',
 };
 
 const closeBtnStyle = {
     background: 'transparent',
     border: 'none',
     color: 'white',
-    fontSize: '20px',
+    fontSize: '24px',
     cursor: 'pointer',
+    padding: '0',
 };
 
 const menuItemStyle = {
-    padding: '15px',
+    padding: '12px 20px',
     textDecoration: 'none',
     display: 'block',
-    fontSize: '16px',
+    fontSize: '14px',
     cursor: 'pointer',
+    borderRadius: '6px',
+    transition: 'all 0.2s',
+    fontWeight: '500',
 };
 
 export default Header;

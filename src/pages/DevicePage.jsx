@@ -1,15 +1,17 @@
 import { useState } from 'react';
 import { useDeviceControl } from '../hooks/useDeviceControl';
 
-function Device() {
-    // 1. Inisialisasi Hook API Backend
+function DevicePage() {
     const { togglePompa, toggleSolenoid, setSlider, isLoading, error } =
         useDeviceControl();
 
-    // 2. State untuk 2 Solenoid Valve (Kanan & Kiri)
     const [valves, setValves] = useState({
-        kanan: false,
-        kiri: false,
+        valve1: false,
+        valve2: false,
+        valve3: false,
+        valve4: false,
+        valve5: false,
+        valve6: false,
     });
 
     // 3. State untuk 4 Checkpoint Position (home, 1, 2, 3)
@@ -18,23 +20,32 @@ function Device() {
 
     // 4. State untuk Kartu Bagian Bawah
     const [isPumpOn, setIsPumpOn] = useState(false);
-    const [isMotorOn, setIsMotorOn] = useState(false); // Initial state: motor mati
+    const [isMotorOn, setIsMotorOn] = useState(false);
     const [isFuzzyOn, setIsFuzzyOn] = useState(false);
 
     // --- FUNGSI KONTROL & LOGIKA INTERLOCK ---
+    const handleValveToggle = async (valveKey) => {
+        // valveKey berupa: 'valve1', 'valve2', 'valve3', 'valve4', 'valve5', 'valve6'
+        // Extract hanya angka: '1', '2', '3', '4', '5', '6'
+        const solenoidNumber = valveKey.replace('valve', '');
 
-    const handleValveToggle = async (solenoidName) => {
-        // solenoidName: 'kanan' atau 'kiri'
-        const currentStatus = valves[solenoidName];
+        const currentStatus = valves[valveKey];
         const actionToSend = !currentStatus ? 'on' : 'off';
 
         try {
-            // 1. Kirim perintah ke FastAPI
-            await toggleSolenoid(solenoidName, actionToSend);
+            // 1. Kirim perintah ke FastAPI dengan hanya angka solenoid (1, 2)
+            // Backend hanya support solenoid 1 dan 2
+            if (solenoidNumber !== '1' && solenoidNumber !== '2') {
+                alert(
+                    `Solenoid ${solenoidNumber} tidak didukung. Hanya 1 dan 2 yang aktif.`,
+                );
+                return;
+            }
+            await toggleSolenoid(solenoidNumber, actionToSend);
 
             // 2. Update UI Valve
             const newValves = { ...valves };
-            newValves[solenoidName] = !currentStatus;
+            newValves[valveKey] = !currentStatus;
             setValves(newValves);
 
             // 3. Logika Otomatis: Jika ada salah satu valve yang menyala, Pompa hidup
@@ -55,15 +66,14 @@ function Device() {
                 }
             }
         } catch (err) {
-            alert(`Gagal mengirim perintah ke solenoid ${solenoidName}`);
+            alert(`Gagal mengirim perintah ke solenoid ${solenoidNumber}`);
         }
     };
 
-    const handleSliderChange = async (checkpoint) => {
-        // checkpoint: 'home', '1', '2', '3'
+    const handleSliderChange = async (position) => {
         try {
-            await setSlider(checkpoint);
-            setSliderPos(checkpoint);
+            await setSlider(position);
+            setSliderPos(position);
         } catch (err) {
             alert('Gagal mengubah posisi slider');
         }
@@ -85,235 +95,353 @@ function Device() {
         }
     };
 
-    const handleMotorToggle = () => {
+    // SUDAH DIPERBAIKI: Menambahkan 'async' di sini
+    const handleMotorToggle = async () => {
         const nextMotorState = !isMotorOn;
         setIsMotorOn(nextMotorState);
 
         // Logika Interlock Mutlak: Motor menyala -> Pompa berhenti
         if (nextMotorState === true) {
             setIsPumpOn(false);
-            // Opsional: panggil await togglePompa("off") di sini jika diperlukan
+            try {
+                // Mematikan pompa melalui API agar alat fisiknya benar-benar mati
+                await togglePompa('off');
+            } catch (err) {
+                alert(
+                    'Motor menyala, tetapi gagal mematikan pompa secara fisik!',
+                );
+            }
         }
     };
 
     // --- RENDER TAMPILAN (UI) ---
-
     return (
         <div>
-            <h1 style={titleStyle}>Device Control</h1>
+            {/* Title */}
+            <h1
+                style={{
+                    fontSize: '48px',
+                    fontWeight: '700',
+                    marginBottom: '40px',
+                    color: '#ffffff',
+                }}
+            >
+                Device Control
+            </h1>
 
-            {/* Menampilkan pesan error global dari hook jika ada */}
             {error && (
-                <div style={{ color: 'red', marginBottom: '15px' }}>
+                <div
+                    style={{
+                        color: '#ef4444',
+                        marginBottom: '20px',
+                        padding: '15px',
+                        backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                        borderRadius: '8px',
+                        border: '1px solid rgba(239, 68, 68, 0.3)',
+                    }}
+                >
                     {error}
                 </div>
             )}
 
-            {/* --- KARTU 1: KONTROL SELENOID VALVE --- */}
-            <div style={cardStyle}>
-                <h3 style={cardTitleStyle}>Kontrol Selenoid Valve</h3>
-                <div style={valveGridStyle}>
-                    {Object.entries(valves).map(([solenoidName, isOn]) => (
-                        <div key={solenoidName} style={{ textAlign: 'center' }}>
-                            <ToggleSwitch
-                                isOn={isOn}
-                                onToggle={() => handleValveToggle(solenoidName)}
-                                disabled={isLoading}
-                            />
-                            <p style={labelStyle}>
-                                Solenoid {solenoidName.toUpperCase()}
-                            </p>
-                        </div>
-                    ))}
-                </div>
-            </div>
-
-            {/* --- KARTU 2: KONTROL POSISI SLIDER --- */}
-            <div style={cardStyle}>
-                <h3 style={cardTitleStyle}>Kontrol Posisi Slider</h3>
-                <div style={sliderContainerStyle}>
-                    {/* Garis abu-abu di belakang bulatan */}
-                    <div style={sliderLineStyle}></div>
-
-                    {/* Mencetak 4 bulatan checkpoint */}
-                    {checkpointLabels.map((label) => (
-                        <div
-                            key={label}
-                            style={{
-                                display: 'flex',
-                                flexDirection: 'column',
-                                alignItems: 'center',
-                                zIndex: 1,
-                            }}
-                        >
-                            <div
-                                onClick={() => handleSliderChange(label)}
-                                style={{
-                                    ...sliderDotStyle,
-                                    backgroundColor:
-                                        sliderPos === label
-                                            ? '#4CAF50'
-                                            : '#dcdde1',
-                                    border: '3px solid white',
-                                    cursor: isLoading
-                                        ? 'not-allowed'
-                                        : 'pointer',
-                                }}
-                            ></div>
-                            <span style={{ ...labelStyle, marginTop: '8px' }}>
-                                {label}
-                            </span>
-                        </div>
-                    ))}
-                </div>
-            </div>
-
-            {/* --- KARTU 3: KONTROL BAWAH (3 KOLOM) --- */}
-            <div style={bottomGridStyle}>
-                <div style={cardStyle}>
-                    <h4 style={bottomCardTitleStyle}>Kontrol Pompa</h4>
-                    <ToggleSwitch
-                        isOn={isPumpOn}
-                        onToggle={handlePumpToggle}
-                        disabled={isLoading}
-                    />
-                </div>
-
-                <div style={cardStyle}>
-                    <h4 style={bottomCardTitleStyle}>Kontrol Stepper Motor</h4>
-                    <ToggleSwitch
-                        isOn={isMotorOn}
-                        onToggle={handleMotorToggle}
-                        disabled={isLoading}
-                    />
-                </div>
-
-                <div style={cardStyle}>
-                    <h4 style={bottomCardTitleStyle}>Automatisasi Fuzzy</h4>
-                    <ToggleSwitch
-                        isOn={isFuzzyOn}
-                        onToggle={() => setIsFuzzyOn(!isFuzzyOn)}
-                    />
-                </div>
-            </div>
-        </div>
-    );
-}
-
-// ==========================================
-// KOMPONEN MINI: TOGGLE SWITCH (SAKELAR)
-// ==========================================
-function ToggleSwitch({ isOn, onToggle, disabled }) {
-    return (
-        <div
-            onClick={disabled ? null : onToggle}
-            style={{
-                width: '50px',
-                height: '26px',
-                backgroundColor: isOn ? '#4CAF50' : '#ccc',
-                borderRadius: '25px',
-                position: 'relative',
-                cursor: disabled ? 'wait' : 'pointer',
-                transition: 'background-color 0.3s',
-                margin: '0 auto',
-                opacity: disabled ? 0.6 : 1,
-            }}
-        >
+            {/* Solenoid Valve Control */}
             <div
                 style={{
-                    width: '22px',
-                    height: '22px',
-                    backgroundColor: 'white',
-                    borderRadius: '50%',
-                    position: 'absolute',
-                    top: '2px',
-                    left: isOn ? '26px' : '2px',
-                    transition: 'left 0.3s',
-                    boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+                    padding: '30px',
+                    borderRadius: '12px',
+                    backgroundColor: '#1e293b',
+                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)',
+                    marginBottom: '30px',
                 }}
-            ></div>
+            >
+                <h3
+                    style={{
+                        marginTop: 0,
+                        marginBottom: '25px',
+                        color: '#cbd5e1',
+                        fontSize: '16px',
+                        fontWeight: '600',
+                    }}
+                >
+                    Kontrol Solenoid Valve
+                </h3>
+
+                <div
+                    style={{
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(6, 1fr)',
+                        gap: '20px',
+                    }}
+                >
+                    {Object.entries(valves).map(([valve, isOn], idx) => {
+                        const isDisabled = idx > 1; // Only valve1 and valve2 are enabled (idx 0 and 1)
+                        return (
+                            <div
+                                key={valve}
+                                style={{
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    alignItems: 'center',
+                                    opacity: isDisabled ? 0.5 : 1,
+                                    pointerEvents: isDisabled ? 'none' : 'auto',
+                                }}
+                            >
+                                <label className="toggle-switch">
+                                    <input
+                                        type="checkbox"
+                                        checked={isOn}
+                                        onChange={() =>
+                                            handleValveToggle(valve)
+                                        }
+                                        disabled={isLoading || isDisabled}
+                                    />
+                                    <span className="toggle-slider"></span>
+                                </label>
+                                <div
+                                    style={{
+                                        marginTop: '12px',
+                                        color: '#cbd5e1',
+                                        fontSize: '14px',
+                                        fontWeight: '500',
+                                    }}
+                                >
+                                    Valve {idx + 1}
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
+            </div>
+
+            {/* Slider Position Control */}
+            <div
+                style={{
+                    padding: '30px',
+                    borderRadius: '12px',
+                    backgroundColor: '#1e293b',
+                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)',
+                    marginBottom: '30px',
+                }}
+            >
+                <h3
+                    style={{
+                        marginTop: 0,
+                        marginBottom: '25px',
+                        color: '#cbd5e1',
+                        fontSize: '16px',
+                        fontWeight: '600',
+                    }}
+                >
+                    Kontrol Posisi Slider
+                </h3>
+
+                <div style={{ position: 'relative', padding: '20px 0' }}>
+                    {/* Position buttons */}
+                    <div
+                        style={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            position: 'relative',
+                            zIndex: 1,
+                        }}
+                    >
+                        {/* Home button */}
+                        <button
+                            onClick={() => handleSliderChange('home')}
+                            style={{
+                                width: '40px',
+                                height: '40px',
+                                borderRadius: '50%',
+                                border: '3px solid white',
+                                backgroundColor:
+                                    sliderPos === 'home'
+                                        ? '#10b981'
+                                        : 'rgba(100, 116, 139, 0.3)',
+                                color: '#ffffff',
+                                cursor: isLoading ? 'not-allowed' : 'pointer',
+                                fontSize: '10px',
+                                fontWeight: '600',
+                                transition: 'all 0.3s ease',
+                                boxShadow:
+                                    sliderPos === 'home'
+                                        ? '0 4px 12px rgba(16, 185, 129, 0.4)'
+                                        : 'none',
+                                opacity: isLoading ? 0.6 : 1,
+                            }}
+                            onMouseEnter={(e) => {
+                                if (!isLoading && sliderPos !== 'home') {
+                                    e.target.style.backgroundColor =
+                                        'rgba(16, 185, 129, 0.3)';
+                                    e.target.style.boxShadow =
+                                        '0 2px 8px rgba(16, 185, 129, 0.2)';
+                                }
+                            }}
+                            onMouseLeave={(e) => {
+                                if (sliderPos !== 'home') {
+                                    e.target.style.backgroundColor =
+                                        'rgba(100, 116, 139, 0.3)';
+                                    e.target.style.boxShadow = 'none';
+                                }
+                            }}
+                            disabled={isLoading}
+                        >
+                            H
+                        </button>
+
+                        {/* Positions 1-12 */}
+                        {Array.from({ length: 12 }, (_, i) => {
+                            const position = i + 1;
+                            const positionStr = String(position);
+                            const isDisabled = position > 3; // Only 1, 2, 3 are enabled
+                            const isActive = sliderPos === positionStr;
+
+                            return (
+                                <button
+                                    key={position}
+                                    onClick={() =>
+                                        handleSliderChange(positionStr)
+                                    }
+                                    disabled={isLoading || isDisabled}
+                                    style={{
+                                        width: '32px',
+                                        height: '32px',
+                                        borderRadius: '50%',
+                                        border: '3px solid white',
+                                        backgroundColor: isActive
+                                            ? '#10b981'
+                                            : isDisabled
+                                              ? 'rgba(100, 116, 139, 0.15)'
+                                              : 'rgba(100, 116, 139, 0.3)',
+                                        color: '#ffffff',
+                                        cursor: isDisabled
+                                            ? 'not-allowed'
+                                            : isLoading
+                                              ? 'not-allowed'
+                                              : 'pointer',
+                                        fontSize: '12px',
+                                        fontWeight: '600',
+                                        transition: 'all 0.3s ease',
+                                        boxShadow: isActive
+                                            ? '0 4px 12px rgba(16, 185, 129, 0.4)'
+                                            : 'none',
+                                        opacity: isDisabled
+                                            ? 0.3
+                                            : isLoading
+                                              ? 0.6
+                                              : 1,
+                                    }}
+                                    onMouseEnter={(e) => {
+                                        if (
+                                            !isLoading &&
+                                            !isDisabled &&
+                                            !isActive
+                                        ) {
+                                            e.target.style.backgroundColor =
+                                                'rgba(16, 185, 129, 0.3)';
+                                            e.target.style.boxShadow =
+                                                '0 2px 8px rgba(16, 185, 129, 0.2)';
+                                        }
+                                    }}
+                                    onMouseLeave={(e) => {
+                                        if (!isActive && !isDisabled) {
+                                            e.target.style.backgroundColor =
+                                                'rgba(100, 116, 139, 0.3)';
+                                            e.target.style.boxShadow = 'none';
+                                        }
+                                    }}
+                                >
+                                    {position}
+                                </button>
+                            );
+                        })}
+                    </div>
+                </div>
+            </div>
+
+            {/* Bottom Control Cards */}
+            <div
+                style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(2, 1fr)',
+                    gap: '20px',
+                }}
+            >
+                {/* Pump Control */}
+                <div
+                    style={{
+                        padding: '30px',
+                        borderRadius: '12px',
+                        backgroundColor: '#1e293b',
+                        border: '1px solid rgba(255, 255, 255, 0.1)',
+                        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)',
+                        textAlign: 'center',
+                    }}
+                >
+                    <h4
+                        style={{
+                            marginTop: 0,
+                            marginBottom: '20px',
+                            color: '#cbd5e1',
+                            fontSize: '16px',
+                            fontWeight: '600',
+                        }}
+                    >
+                        Kontrol Pompa
+                    </h4>
+                    <label
+                        className="toggle-switch"
+                        style={{ justifyContent: 'center' }}
+                    >
+                        <input
+                            type="checkbox"
+                            checked={isPumpOn}
+                            onChange={handlePumpToggle}
+                            disabled={isLoading}
+                        />
+                        <span className="toggle-slider"></span>
+                    </label>
+                </div>
+
+                {/* Fuzzy Automation */}
+                <div
+                    style={{
+                        padding: '30px',
+                        borderRadius: '12px',
+                        backgroundColor: '#1e293b',
+                        border: '1px solid rgba(255, 255, 255, 0.1)',
+                        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)',
+                        textAlign: 'center',
+                    }}
+                >
+                    <h4
+                        style={{
+                            marginTop: 0,
+                            marginBottom: '20px',
+                            color: '#cbd5e1',
+                            fontSize: '16px',
+                            fontWeight: '600',
+                        }}
+                    >
+                        Automatisasi Fuzzy
+                    </h4>
+                    <label
+                        className="toggle-switch"
+                        style={{ justifyContent: 'center' }}
+                    >
+                        <input
+                            type="checkbox"
+                            checked={isFuzzyOn}
+                            onChange={() => setIsFuzzyOn(!isFuzzyOn)}
+                        />
+                        <span className="toggle-slider"></span>
+                    </label>
+                </div>
+            </div>
         </div>
     );
 }
 
-// ==========================================
-// PENGATURAN CSS OBJECT (TEMA TERANG)
-// ==========================================
-
-const titleStyle = {
-    marginBottom: '20px',
-    color: '#333',
-};
-
-const cardStyle = {
-    backgroundColor: 'white',
-    padding: '20px',
-    borderRadius: '8px',
-    marginBottom: '20px',
-    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-};
-
-const cardTitleStyle = {
-    margin: '0 0 20px 0',
-    fontSize: '18px',
-    color: '#333',
-    borderBottom: '1px solid #eee',
-    paddingBottom: '10px',
-};
-
-const bottomCardTitleStyle = {
-    margin: '0 0 20px 0',
-    fontSize: '16px',
-    color: '#333',
-    textAlign: 'center',
-};
-
-const valveGridStyle = {
-    display: 'flex',
-    justifyContent: 'space-between',
-    flexWrap: 'wrap',
-    gap: '20px',
-};
-
-const labelStyle = {
-    marginTop: '10px',
-    fontSize: '14px',
-    color: '#666',
-    fontWeight: '500',
-};
-
-// CSS Khusus untuk Slider Posisi
-const sliderContainerStyle = {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    position: 'relative',
-    padding: '10px 0 10px 0',
-};
-
-const sliderLineStyle = {
-    position: 'absolute',
-    top: '21px',
-    left: '15px',
-    right: '15px',
-    height: '4px',
-    backgroundColor: '#eee',
-    zIndex: 0,
-};
-
-const sliderDotStyle = {
-    width: '26px',
-    height: '26px',
-    borderRadius: '50%',
-    transition: 'all 0.2s',
-    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-};
-
-// CSS untuk Grid 3 Kolom di Bawah
-const bottomGridStyle = {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-    gap: '20px',
-};
-
-export default Device;
+export default DevicePage;
