@@ -1,6 +1,38 @@
 import MonitoringCard from '../components/MonitoringCard';
+import { useSensorHistory } from '../hooks/useSensorHistory';
 
 function Dashboard() {
+    // Memanggil hook (jika backend mati, error akan terisi)
+    const { historyData, isLoading, error } = useSensorHistory(1);
+
+    // 1. SAFE EXTRACTION (Menggunakan Optional Chaining ?. agar tidak crash jika array kosong)
+    const latestRecord = historyData?.[0];
+    const latestData = latestRecord?.data; // Mengambil objek 'data' jika record ada
+    const latestTime = latestRecord?.timestamp
+        ? new Date(latestRecord.timestamp).toLocaleString('id-ID')
+        : '--';
+
+    // 2. FORMALISASI FORMAT TEKS (Gunakan '--' jika data tidak tersedia)
+    const displaySuhu =
+        latestData?.temp_1 !== undefined ? `${latestData.temp_1}°C` : '--';
+    const displayKelembapanUdara =
+        latestData?.humidity_1 !== undefined
+            ? `RH ${latestData.humidity_1}%`
+            : '--';
+    const displayCahaya =
+        latestData?.light_1 !== undefined ? `${latestData.light_1} Lux` : '--';
+
+    // 3. LOGIKA VISUAL PROGRESS (Wajib angka 0-100 agar komponen SVG tidak rusak)
+    const soil1 = latestData?.soil_1 ?? 0;
+    const soil2 = latestData?.soil_2 ?? 0;
+    const soil3 = latestData?.soil_3 ?? 0;
+    const soil4 = latestData?.soil_4 ?? 0;
+    const soil5 = latestData?.soil_5 ?? 0;
+    const soil6 = latestData?.soil_6 ?? 0;
+    const rerataTanah = latestRecord
+        ? Math.round((soil1 + soil2 + soil3 + soil4 + soil5 + soil6) / 6)
+        : 0;
+
     return (
         <div>
             {/* Greeting */}
@@ -53,7 +85,7 @@ function Dashboard() {
                             marginBottom: '20px',
                         }}
                     >
-                        <CircularProgress value={75} />
+                        <CircularProgress value={rerataTanah} />
                     </div>
                     <div
                         style={{
@@ -106,7 +138,7 @@ function Dashboard() {
                                     color: '#10b981',
                                 }}
                             >
-                                28°C
+                                {displaySuhu}
                             </div>
                         </div>
                         <span style={{ fontSize: '40px' }}>🌡️</span>
@@ -135,7 +167,7 @@ function Dashboard() {
                                     color: '#10b981',
                                 }}
                             >
-                                RH 50%
+                                {displayKelembapanUdara}
                             </div>
                         </div>
                         <span style={{ fontSize: '40px' }}>💧</span>
@@ -164,7 +196,7 @@ function Dashboard() {
                                     color: '#10b981',
                                 }}
                             >
-                                800 Lux
+                                {displayCahaya}
                             </div>
                         </div>
                         <span style={{ fontSize: '40px' }}>☀️</span>
@@ -193,7 +225,7 @@ function CircularProgress({ value }) {
     const offset = circumference - (value / 100) * circumference;
 
     return (
-        <svg width="120" height="120" style={{ transform: 'rotate(-90deg)' }}>
+        <svg width="120" height="120">
             {/* Background Circle */}
             <circle
                 cx="60"

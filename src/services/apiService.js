@@ -4,8 +4,10 @@
 import axios from 'axios';
 
 // ==================== CONFIGURATION ====================
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
-const WEBSOCKET_URL = process.env.REACT_APP_WS_URL || 'ws://localhost:8000/ws';
+const API_BASE_URL =
+    import.meta.env?.VITE_API_URL || 'http://localhost:8080';
+const WEBSOCKET_URL =
+    import.meta.env?.VITE_WS_URL || 'ws://localhost:8080/ws';
 
 // Create axios instance
 export const apiClient = axios.create({
@@ -35,6 +37,16 @@ export const deviceAPI = {
      * @returns {Promise} Latest sensor readings
      */
     getSensorData: () => apiClient.get('/sensor'),
+};
+
+// ==================== RECORDS ENDPOINTS ====================
+export const recordsAPI = {
+    /**
+     * Mengambil riwayat data sensor yang sudah rapi dari PostgreSQL Backend
+     * @param {number} limit - Jumlah baris data yang ingin diambil
+     */
+    getHistory: (limit = 50) =>
+        apiClient.get('/api/preprocessed', { params: { limit } }),
 };
 
 // ==================== MOTOR CONTROL ENDPOINTS ====================
@@ -321,6 +333,7 @@ export class WebSocketClient {
 export default {
     apiClient,
     deviceAPI,
+    recordsAPI,
     motorAPI,
     relayAPI,
     wateringAPI,
