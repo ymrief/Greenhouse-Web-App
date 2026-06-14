@@ -1,6 +1,7 @@
 import { useContext, useState } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
+import { authAPI } from '../services/apiService';
 
 function Header() {
     const { isAdmin, logoutAdmin } = useContext(AuthContext);
@@ -8,7 +9,12 @@ function Header() {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [isProfileOpen, setIsProfileOpen] = useState(false);
 
-    const handleLogout = () => {
+    const handleLogout = async () => {
+        try {
+            await authAPI.logout();
+        } catch (err) {
+            console.error('Gagal logout di server:', err);
+        }
         logoutAdmin();
         setIsSidebarOpen(false);
         setIsProfileOpen(false);

@@ -4,10 +4,38 @@
 import axios from 'axios';
 
 // ==================== CONFIGURATION ====================
-const API_BASE_URL =
-    import.meta.env?.VITE_API_URL || 'http://localhost:8080';
-const WEBSOCKET_URL =
-    import.meta.env?.VITE_WS_URL || 'ws://localhost:8080/ws';
+// Dynamically resolve base URL to ensure same-site request for cookies
+const getApiBaseUrl = () => {
+    if (typeof window === 'undefined') return 'http://192.168.31.34:8000';
+    if (import.meta.env?.VITE_API_URL) {
+        return import.meta.env.VITE_API_URL;
+    }
+    // Menggunakan origin frontend lokal agar browser menganggapnya Same-Site (cookie disimpan & terkirim)
+    return window.location.origin;
+};
+
+const getWsUrl = () => {
+    if (typeof window === 'undefined') return 'ws://192.168.31.34:8000/ws';
+    if (import.meta.env?.VITE_WS_URL) {
+        return import.meta.env.VITE_WS_URL;
+    }
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    return `${protocol}//${window.location.host}/ws`;
+};
+
+const getControlWsUrl = () => {
+    if (typeof window === 'undefined') return 'ws://192.168.31.34:8000/ws/control';
+    if (import.meta.env?.VITE_CONTROL_WS_URL) {
+        return import.meta.env.VITE_CONTROL_WS_URL;
+    }
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    return `${protocol}//${window.location.host}/ws/control`;
+};
+
+const API_BASE_URL = getApiBaseUrl();
+const WEBSOCKET_URL = getWsUrl();
+const CONTROL_WEBSOCKET_URL = getControlWsUrl();
+
 
 // Create axios instance
 export const apiClient = axios.create({
@@ -15,8 +43,29 @@ export const apiClient = axios.create({
     headers: {
         'Content-Type': 'application/json',
     },
+    withCredentials: true,
     timeout: 30000,
 });
+
+// ==================== AUTH ENDPOINTS ====================
+export const authAPI = {
+    /**
+     * Authenticate operator with credentials
+     * @param {string} username
+     * @param {string} password
+     */
+    login: (username, password) => apiClient.post('/api/auth/login', { username, password }),
+
+    /**
+     * Clear operator session cookie
+     */
+    logout: () => apiClient.post('/api/auth/logout'),
+
+    /**
+     * Retrieve current active session
+     */
+    checkSession: () => apiClient.get('/api/auth/session'),
+};
 
 // ==================== DEVICE ENDPOINTS ====================
 export const deviceAPI = {
@@ -37,6 +86,12 @@ export const deviceAPI = {
      * @returns {Promise} Latest sensor readings
      */
     getSensorData: () => apiClient.get('/sensor'),
+
+    /**
+     * Get active control states of actuators
+     * @returns {Promise}
+     */
+    getControlState: () => apiClient.get('/control/state'),
 };
 
 // ==================== RECORDS ENDPOINTS ====================
@@ -47,6 +102,13 @@ export const recordsAPI = {
      */
     getHistory: (limit = 50) =>
         apiClient.get('/api/preprocessed', { params: { limit } }),
+
+    /**
+     * Mengambil riwayat log kontrol dari PostgreSQL Backend
+     * @param {number} limit - Jumlah baris data yang ingin diambil
+     */
+    getControlLogs: (limit = 100) =>
+        apiClient.get('/api/control-logs', { params: { limit } }),
 };
 
 // ==================== MOTOR CONTROL ENDPOINTS ====================
@@ -93,6 +155,13 @@ export const wateringAPI = {
      * @returns {Promise}
      */
     runAutoWatering: () => apiClient.post('/auto/run'),
+
+    /**
+     * Toggle automatic fuzzy mode
+     * @param {boolean} isAuto
+     * @returns {Promise}
+     */
+    toggleAutoMode: (isAuto) => apiClient.post('/auto/mode', { is_auto: isAuto }),
 };
 
 // ==================== DEVICE GROUPS ====================
@@ -329,15 +398,23 @@ export class WebSocketClient {
     }
 }
 
+export class ControlWebSocketClient extends WebSocketClient {
+    constructor() {
+        super(CONTROL_WEBSOCKET_URL);
+    }
+}
+
 // ==================== DEFAULTS ====================
 export default {
     apiClient,
+    authAPI,
     deviceAPI,
     recordsAPI,
     motorAPI,
     relayAPI,
     wateringAPI,
     WebSocketClient,
+    ControlWebSocketClient,
     DEVICE_GROUPS,
     MOTOR_CHECKPOINTS,
     RELAY_TARGETS,

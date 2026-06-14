@@ -1,6 +1,7 @@
 import { useState, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
+import { authAPI, handleAPIError } from '../services/apiService';
 
 function LoginPage() {
     const navigate = useNavigate();
@@ -10,7 +11,7 @@ function LoginPage() {
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
 
-    const handleLogin = (e) => {
+    const handleLogin = async (e) => {
         e.preventDefault();
         setError('');
 
@@ -19,12 +20,17 @@ function LoginPage() {
             return;
         }
 
-        // Simple validation (replace with actual authentication)
-        if (username && password) {
-            loginAdmin();
-            navigate('/');
-        } else {
-            setError('Username atau password salah');
+        try {
+            const response = await authAPI.login(username, password);
+            if (response.data && response.data.success) {
+                loginAdmin();
+                navigate('/');
+            } else {
+                setError(response.data?.message || 'Username atau password salah');
+            }
+        } catch (err) {
+            const errDetails = handleAPIError(err);
+            setError(errDetails.message || 'Gagal menghubungi server');
         }
     };
 

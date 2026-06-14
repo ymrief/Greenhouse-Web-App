@@ -1,91 +1,93 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import apiService from '../services/apiService';
 
 function HistoryPage() {
+    const [logs, setLogs] = useState([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState(null);
     const [searchQuery, setSearchQuery] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
-    const itemsPerPage = 5;
+    const itemsPerPage = 10;
 
-    // Sample data - ganti dengan API call nanti
-    const allLogs = [
+    useEffect(() => {
+        const fetchLogs = async () => {
+            try {
+                setIsLoading(true);
+                const response = await apiService.recordsAPI.getControlLogs(100);
+                setLogs(response.data);
+                setError(null);
+            } catch (err) {
+                const formattedError = apiService.handleAPIError(err);
+                setError(formattedError.message);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        fetchLogs();
+    }, []);
+
+    // Filter logs berdasarkan input pencarian
+    const filteredLogs = logs.filter(
+        (log) =>
+            (log.action && log.action.toLowerCase().includes(searchQuery.toLowerCase())) ||
+            (log.device_target && log.device_target.toLowerCase().includes(searchQuery.toLowerCase())) ||
+            (log.status && log.status.toLowerCase().includes(searchQuery.toLowerCase())) ||
+            (log.created_at && log.created_at.includes(searchQuery)),
+    );
+
+    // Definisi Kolom Dinamis (Dynamic Columns)
+    const columns = [
         {
-            id: 1,
-            timestamp: '2024-05-29 14:30:15',
-            action: 'Valve 1 Opened',
-            device: 'Solenoid Valve',
-            status: 'Success',
+            key: 'created_at',
+            label: 'Waktu',
+            width: '180px',
+            render: (val) => (val ? new Date(val).toLocaleString('id-ID') : '--'),
         },
         {
-            id: 2,
-            timestamp: '2024-05-29 14:25:10',
-            action: 'Pump Started',
-            device: 'Water Pump',
-            status: 'Success',
+            key: 'device_target',
+            label: 'Perangkat',
+            width: '140px',
+            render: (val) => val || 'Sistem',
         },
         {
-            id: 3,
-            timestamp: '2024-05-29 14:20:45',
-            action: 'Slider Moved to Position 5',
-            device: 'Slider',
-            status: 'Success',
+            key: 'status',
+            label: 'Status',
+            width: '110px',
+            render: (val) => {
+                const color =
+                    val === 'success' || val === 'Success' || val === 'sent'
+                        ? '#10b981'
+                        : '#ef4444';
+                return (
+                    <span style={{ color, fontWeight: '600' }}>
+                        {val ? val.toUpperCase() : 'SENT'}
+                    </span>
+                );
+            },
         },
         {
-            id: 4,
-            timestamp: '2024-05-29 14:15:30',
-            action: 'Light Turned On',
-            device: 'Light Control',
-            status: 'Success',
+            key: 'is_automated',
+            label: 'Mode',
+            width: '120px',
+            render: (val) => (val ? '🤖 Otomatis' : '👤 Manual'),
         },
         {
-            id: 5,
-            timestamp: '2024-05-29 14:10:00',
-            action: 'Fuzzy Automation Enabled',
-            device: 'System',
-            status: 'Success',
+            key: 'action',
+            label: 'Aksi',
+            width: '1fr',
+            render: (val) => val,
         },
         {
-            id: 6,
-            timestamp: '2024-05-29 14:05:20',
-            action: 'Valve 3 Closed',
-            device: 'Solenoid Valve',
-            status: 'Success',
-        },
-        {
-            id: 7,
-            timestamp: '2024-05-29 14:00:15',
-            action: 'System Started',
-            device: 'System',
-            status: 'Success',
-        },
-        {
-            id: 8,
-            timestamp: '2024-05-29 13:55:00',
-            action: 'Temperature Read: 28.5°C',
-            device: 'Sensor',
-            status: 'Success',
-        },
-        {
-            id: 9,
-            timestamp: '2024-05-29 13:50:45',
-            action: 'Humidity Read: 65%',
-            device: 'Sensor',
-            status: 'Success',
-        },
-        {
-            id: 10,
-            timestamp: '2024-05-29 13:45:30',
-            action: 'Soil Moisture Read: 75%',
-            device: 'Sensor',
-            status: 'Success',
+            key: 'retry_count',
+            label: 'Retry',
+            width: '70px',
+            render: (val) => val,
         },
     ];
 
-    // Filter logs based on search query
-    const filteredLogs = allLogs.filter(
-        (log) =>
-            log.action.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            log.device.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            log.timestamp.includes(searchQuery),
-    );
+    // Menggabungkan konfigurasi lebar kolom untuk gridTemplateColumns CSS
+    const gridTemplateColumns = columns.map((col) => col.width).join(' ');
 
     // Pagination
     const totalPages = Math.ceil(filteredLogs.length / itemsPerPage);
@@ -123,7 +125,7 @@ function HistoryPage() {
                 >
                     <input
                         type="text"
-                        placeholder="Search logs..."
+                        placeholder="Cari logs (aksi, perangkat, status, atau waktu)..."
                         value={searchQuery}
                         onChange={(e) => {
                             setSearchQuery(e.target.value);
@@ -165,91 +167,58 @@ function HistoryPage() {
                     boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)',
                 }}
             >
-                {/* Table Header */}
+                {/* Table Header secara dinamis */}
                 <div
                     style={{
                         display: 'grid',
-                        gridTemplateColumns: '150px 200px 150px 1fr',
+                        gridTemplateColumns: gridTemplateColumns,
                         gap: '20px',
                         padding: '20px',
                         backgroundColor: 'rgba(0, 0, 0, 0.2)',
                         borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
                     }}
                 >
-                    <div
-                        style={{
-                            color: '#94a3b8',
-                            fontWeight: '600',
-                            fontSize: '14px',
-                        }}
-                    >
-                        Time
-                    </div>
-                    <div
-                        style={{
-                            color: '#94a3b8',
-                            fontWeight: '600',
-                            fontSize: '14px',
-                        }}
-                    >
-                        Device
-                    </div>
-                    <div
-                        style={{
-                            color: '#94a3b8',
-                            fontWeight: '600',
-                            fontSize: '14px',
-                        }}
-                    >
-                        Status
-                    </div>
-                    <div
-                        style={{
-                            color: '#94a3b8',
-                            fontWeight: '600',
-                            fontSize: '14px',
-                        }}
-                    >
-                        Action
-                    </div>
+                    {columns.map((col) => (
+                        <div
+                            key={col.key}
+                            style={{
+                                color: '#94a3b8',
+                                fontWeight: '600',
+                                fontSize: '14px',
+                            }}
+                        >
+                            {col.label}
+                        </div>
+                    ))}
                 </div>
 
                 {/* Table Body */}
-                {displayedLogs.length > 0 ? (
+                {isLoading ? (
+                    <div style={{ padding: '40px 20px', textAlign: 'center', color: '#cbd5e1' }}>
+                        Memuat log aktivitas...
+                    </div>
+                ) : error ? (
+                    <div style={{ padding: '40px 20px', textAlign: 'center', color: '#ef4444' }}>
+                        Gagal memuat log: {error}
+                    </div>
+                ) : displayedLogs.length > 0 ? (
                     displayedLogs.map((log) => (
                         <div
                             key={log.id}
                             style={{
                                 display: 'grid',
-                                gridTemplateColumns: '150px 200px 150px 1fr',
+                                gridTemplateColumns: gridTemplateColumns,
                                 gap: '20px',
                                 padding: '20px',
-                                borderBottom:
-                                    '1px solid rgba(255, 255, 255, 0.05)',
+                                borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
                                 alignItems: 'center',
                             }}
                         >
-                            <div style={{ color: '#cbd5e1', fontSize: '13px' }}>
-                                {log.timestamp}
-                            </div>
-                            <div style={{ color: '#cbd5e1', fontSize: '13px' }}>
-                                {log.device}
-                            </div>
-                            <div
-                                style={{
-                                    fontSize: '13px',
-                                    color:
-                                        log.status === 'Success'
-                                            ? '#10b981'
-                                            : '#ef4444',
-                                    fontWeight: '600',
-                                }}
-                            >
-                                {log.status}
-                            </div>
-                            <div style={{ color: '#cbd5e1', fontSize: '13px' }}>
-                                {log.action}
-                            </div>
+                            {columns.map((col) => (
+                                <div key={col.key} style={{ color: '#cbd5e1', fontSize: '13px' }}>
+                                    {col.render(log[col.key])}
+                                </div>
+                            ))}
                         </div>
                     ))
                 ) : (
@@ -260,7 +229,7 @@ function HistoryPage() {
                             color: '#64748b',
                         }}
                     >
-                        No logs found matching your search.
+                        Tidak ada log aktivitas yang ditemukan.
                     </div>
                 )}
             </div>
@@ -278,21 +247,16 @@ function HistoryPage() {
                 >
                     {/* Previous Button */}
                     <button
-                        onClick={() =>
-                            setCurrentPage((p) => Math.max(1, p - 1))
-                        }
+                        onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                         disabled={currentPage === 1}
                         style={{
                             padding: '8px 12px',
                             borderRadius: '6px',
                             border: '1px solid rgba(255, 255, 255, 0.1)',
                             backgroundColor:
-                                currentPage === 1
-                                    ? 'rgba(255, 255, 255, 0.05)'
-                                    : '#1e293b',
+                                currentPage === 1 ? 'rgba(255, 255, 255, 0.05)' : '#1e293b',
                             color: currentPage === 1 ? '#64748b' : '#cbd5e1',
-                            cursor:
-                                currentPage === 1 ? 'not-allowed' : 'pointer',
+                            cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
                             fontSize: '14px',
                             fontWeight: '500',
                         }}
@@ -302,10 +266,7 @@ function HistoryPage() {
 
                     {/* Page Numbers */}
                     <div style={{ display: 'flex', gap: '5px' }}>
-                        {Array.from(
-                            { length: totalPages },
-                            (_, i) => i + 1,
-                        ).map((page) => (
+                        {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
                             <button
                                 key={page}
                                 onClick={() => setCurrentPage(page)}
@@ -321,10 +282,7 @@ function HistoryPage() {
                                         page === currentPage
                                             ? 'rgba(16, 185, 129, 0.15)'
                                             : '#1e293b',
-                                    color:
-                                        page === currentPage
-                                            ? '#10b981'
-                                            : '#cbd5e1',
+                                    color: page === currentPage ? '#10b981' : '#cbd5e1',
                                     cursor: 'pointer',
                                     fontSize: '14px',
                                     fontWeight: '600',
@@ -337,9 +295,7 @@ function HistoryPage() {
 
                     {/* Next Button */}
                     <button
-                        onClick={() =>
-                            setCurrentPage((p) => Math.min(totalPages, p + 1))
-                        }
+                        onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
                         disabled={currentPage === totalPages}
                         style={{
                             padding: '8px 12px',
@@ -349,14 +305,8 @@ function HistoryPage() {
                                 currentPage === totalPages
                                     ? 'rgba(255, 255, 255, 0.05)'
                                     : '#1e293b',
-                            color:
-                                currentPage === totalPages
-                                    ? '#64748b'
-                                    : '#cbd5e1',
-                            cursor:
-                                currentPage === totalPages
-                                    ? 'not-allowed'
-                                    : 'pointer',
+                            color: currentPage === totalPages ? '#64748b' : '#cbd5e1',
+                            cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
                             fontSize: '14px',
                             fontWeight: '500',
                         }}
@@ -370,3 +320,4 @@ function HistoryPage() {
 }
 
 export default HistoryPage;
+

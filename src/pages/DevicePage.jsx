@@ -1,9 +1,16 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useDeviceControl } from '../hooks/useDeviceControl';
+import apiService from '../services/apiService';
 
 function DevicePage() {
-    const { togglePompa, toggleSolenoid, setSlider, isLoading, error } =
-        useDeviceControl();
+    const {
+        togglePompa,
+        toggleSolenoid,
+        setSlider,
+        toggleAutoMode,
+        isLoading,
+        error,
+    } = useDeviceControl();
 
     const [valves, setValves] = useState({
         valve1: false,
@@ -14,57 +21,143 @@ function DevicePage() {
         valve6: false,
     });
 
-    // 3. State untuk 4 Checkpoint Position (home, 1, 2, 3)
+    // State untuk 4 Checkpoint Position (home, 1, 2, 3)
     const [sliderPos, setSliderPos] = useState('home');
     const checkpointLabels = ['home', '1', '2', '3'];
 
-    // 4. State untuk Kartu Bagian Bawah
+    // State untuk Kartu Bagian Bawah
     const [isPumpOn, setIsPumpOn] = useState(false);
     const [isMotorOn, setIsMotorOn] = useState(false);
     const [isFuzzyOn, setIsFuzzyOn] = useState(false);
 
-    // --- FUNGSI KONTROL & LOGIKA INTERLOCK ---
-    const handleValveToggle = async (valveKey) => {
-        // valveKey berupa: 'valve1', 'valve2', 'valve3', 'valve4', 'valve5', 'valve6'
-        // Extract hanya angka: '1', '2', '3', '4', '5', '6'
-        const solenoidNumber = valveKey.replace('valve', '');
+    // State untuk mencatat perangkat yang sedang dalam proses request (pending)
+    const [loadingStates, setLoadingStates] = useState({});
 
+    // Gaya animasi transisi untuk tombol/toggle yang sedang memuat
+    const getToggleStyle = (devKey) => {
+        return loadingStates[devKey]
+            ? {
+                  opacity: 0.6,
+                  pointerEvents: 'none',
+                  animation: 'pulse 1.5s infinite ease-in-out',
+              }
+            : {};
+    };
+
+    // Mengambil status kontrol awal dari backend saat komponen dimuat (mount)
+    useEffect(() => {
+        let isMounted = true;
+        const fetchInitialState = async () => {
+            try {
+                const response = await apiService.deviceAPI.getControlState();
+                if (isMounted && response?.data) {
+                    const data = response.data;
+                    setIsPumpOn(data.is_pump_on || false);
+                    setIsFuzzyOn(data.is_auto_mode || false);
+                    setSliderPos(data.slider_pos || 'home');
+                    setValves({
+                        valve1: data.valves?.['1'] || false,
+                        valve2: data.valves?.['2'] || false,
+                        valve3: data.valves?.['3'] || false,
+                        valve4: data.valves?.['4'] || false,
+                        valve5: data.valves?.['5'] || false,
+                        valve6: data.valves?.['6'] || false,
+                    });
+                }
+            } catch (err) {
+                console.error('[WS] Gagal memuat status kontrol awal:', err);
+            }
+        };
+        fetchInitialState();
+        return () => {
+            isMounted = false;
+        };
+    }, []);
+
+    // Menghubungkan WebSocket khusus Kontrol untuk Sinkronisasi Real-Time antar perangkat
+    useEffect(() => {
+        const ws = new apiService.ControlWebSocketClient();
+
+        ws.connect()
+            .then(() => {
+                console.log('[WS] DevicePage berhasil berlangganan event kontrol pada /ws/control.');
+            })
+            .catch((err) => {
+                console.error('[WS] Gagal menghubungkan WebSocket Kontrol pada DevicePage', err);
+            });
+
+        ws.on('message', (message) => {
+            if (!message || !message.type) return;
+
+            const { type, device, target, action } = message;
+
+            if (type === 'control_pending') {
+                // Aktifkan mode loading untuk tombol bersangkutan di semua client
+                setLoadingStates((prev) => {
+                    const next = { ...prev };
+                    if (device === 'pompa') next.pompa = true;
+                    else if (device === 'solenoid') next[`solenoid_${target}`] = true;
+                    else if (device === 'slider') next.slider = true;
+                    else if (device === 'auto_mode') next.auto_mode = true;
+                    return next;
+                });
+            } else if (type === 'control_success') {
+                // Matikan mode loading dan perbarui status visual di semua client
+                setLoadingStates((prev) => {
+                    const next = { ...prev };
+                    if (device === 'pompa') delete next.pompa;
+                    else if (device === 'solenoid') delete next[`solenoid_${target}`];
+                    else if (device === 'slider') delete next.slider;
+                    else if (device === 'auto_mode') delete next.auto_mode;
+                    return next;
+                });
+
+                if (device === 'pompa') {
+                    setIsPumpOn(action === 'on');
+                    if (action === 'on') {
+                        setIsMotorOn(false); // Interlock pompa nyala -> motor berhenti
+                    }
+                } else if (device === 'solenoid') {
+                    setValves((prev) => ({
+                        ...prev,
+                        [`valve${target}`]: action === 'on',
+                    }));
+                } else if (device === 'slider') {
+                    setSliderPos(target);
+                } else if (device === 'auto_mode') {
+                    setIsFuzzyOn(action === 'on');
+                }
+            } else if (type === 'control_failure') {
+                // Hentikan mode loading jika proses di microcontroller gagal
+                setLoadingStates((prev) => {
+                    const next = { ...prev };
+                    if (device === 'pompa') delete next.pompa;
+                    else if (device === 'solenoid') delete next[`solenoid_${target}`];
+                    else if (device === 'slider') delete next.slider;
+                    else if (device === 'auto_mode') delete next.auto_mode;
+                    return next;
+                });
+                console.error(`Gagal mengontrol ${device}:`, message.error);
+            }
+        });
+
+        return () => {
+            ws.disconnect();
+        };
+    }, []);
+
+    // --- FUNGSI KONTROL (Mengandalkan WS untuk update state demi sinkronisasi mutlak) ---
+    const handleValveToggle = async (valveKey) => {
+        const solenoidNumber = valveKey.replace('valve', '');
         const currentStatus = valves[valveKey];
         const actionToSend = !currentStatus ? 'on' : 'off';
 
         try {
-            // 1. Kirim perintah ke FastAPI dengan hanya angka solenoid (1, 2)
-            // Backend hanya support solenoid 1 dan 2
             if (solenoidNumber !== '1' && solenoidNumber !== '2') {
-                alert(
-                    `Solenoid ${solenoidNumber} tidak didukung. Hanya 1 dan 2 yang aktif.`,
-                );
+                alert(`Solenoid ${solenoidNumber} tidak didukung. Hanya 1 dan 2 yang aktif.`);
                 return;
             }
             await toggleSolenoid(solenoidNumber, actionToSend);
-
-            // 2. Update UI Valve
-            const newValves = { ...valves };
-            newValves[valveKey] = !currentStatus;
-            setValves(newValves);
-
-            // 3. Logika Otomatis: Jika ada salah satu valve yang menyala, Pompa hidup
-            const isAnyValveOpen = Object.values(newValves).some(
-                (v) => v === true,
-            );
-            if (isAnyValveOpen) {
-                if (!isPumpOn) {
-                    await togglePompa('on');
-                    setIsPumpOn(true);
-                    setIsMotorOn(false); // Interlock: Pompa nyala -> Motor berhenti
-                }
-            } else {
-                // Jika semua valve tertutup, matikan pompa
-                if (isPumpOn) {
-                    await togglePompa('off');
-                    setIsPumpOn(false);
-                }
-            }
         } catch (err) {
             alert(`Gagal mengirim perintah ke solenoid ${solenoidNumber}`);
         }
@@ -73,7 +166,6 @@ function DevicePage() {
     const handleSliderChange = async (position) => {
         try {
             await setSlider(position);
-            setSliderPos(position);
         } catch (err) {
             alert('Gagal mengubah posisi slider');
         }
@@ -83,19 +175,11 @@ function DevicePage() {
         const nextPumpState = !isPumpOn;
         try {
             await togglePompa(nextPumpState ? 'on' : 'off');
-
-            setIsPumpOn(nextPumpState);
-
-            // Logika Interlock Mutlak: Pompa menyala -> Motor berhenti
-            if (nextPumpState === true) {
-                setIsMotorOn(false);
-            }
         } catch (err) {
             alert('Gagal mengontrol pompa');
         }
     };
 
-    // SUDAH DIPERBAIKI: Menambahkan 'async' di sini
     const handleMotorToggle = async () => {
         const nextMotorState = !isMotorOn;
         setIsMotorOn(nextMotorState);
@@ -104,19 +188,34 @@ function DevicePage() {
         if (nextMotorState === true) {
             setIsPumpOn(false);
             try {
-                // Mematikan pompa melalui API agar alat fisiknya benar-benar mati
                 await togglePompa('off');
             } catch (err) {
-                alert(
-                    'Motor menyala, tetapi gagal mematikan pompa secara fisik!',
-                );
+                alert('Motor menyala, tetapi gagal mematikan pompa secara fisik!');
             }
+        }
+    };
+
+    const handleFuzzyToggle = async () => {
+        const nextFuzzyState = !isFuzzyOn;
+        try {
+            await toggleAutoMode(nextFuzzyState);
+        } catch (err) {
+            alert('Gagal mengubah status automatisasi Fuzzy');
         }
     };
 
     // --- RENDER TAMPILAN (UI) ---
     return (
         <div>
+            {/* Gaya Transisi Pulse Loader */}
+            <style>{`
+                @keyframes pulse {
+                    0% { opacity: 0.4; }
+                    50% { opacity: 0.8; }
+                    100% { opacity: 0.4; }
+                }
+            `}</style>
+
             {/* Title */}
             <h1
                 style={{
@@ -175,7 +274,10 @@ function DevicePage() {
                     }}
                 >
                     {Object.entries(valves).map(([valve, isOn], idx) => {
-                        const isDisabled = idx > 1; // Only valve1 and valve2 are enabled (idx 0 and 1)
+                        const isDisabled = idx > 1; // Hanya valve 1 dan 2 yang aktif
+                        const devKey = `solenoid_${idx + 1}`;
+                        const isPending = loadingStates[devKey];
+
                         return (
                             <div
                                 key={valve}
@@ -187,14 +289,15 @@ function DevicePage() {
                                     pointerEvents: isDisabled ? 'none' : 'auto',
                                 }}
                             >
-                                <label className="toggle-switch">
+                                <label 
+                                    className="toggle-switch" 
+                                    style={getToggleStyle(devKey)}
+                                >
                                     <input
                                         type="checkbox"
                                         checked={isOn}
-                                        onChange={() =>
-                                            handleValveToggle(valve)
-                                        }
-                                        disabled={isLoading || isDisabled}
+                                        onChange={() => handleValveToggle(valve)}
+                                        disabled={isLoading || isDisabled || isPending}
                                     />
                                     <span className="toggle-slider"></span>
                                 </label>
@@ -238,7 +341,6 @@ function DevicePage() {
                 </h3>
 
                 <div style={{ position: 'relative', padding: '20px 0' }}>
-                    {/* Position buttons */}
                     <div
                         style={{
                             display: 'flex',
@@ -251,6 +353,7 @@ function DevicePage() {
                         {/* Home button */}
                         <button
                             onClick={() => handleSliderChange('home')}
+                            disabled={isLoading || loadingStates.slider}
                             style={{
                                 width: '40px',
                                 height: '40px',
@@ -261,7 +364,7 @@ function DevicePage() {
                                         ? '#10b981'
                                         : 'rgba(100, 116, 139, 0.3)',
                                 color: '#ffffff',
-                                cursor: isLoading ? 'not-allowed' : 'pointer',
+                                cursor: (isLoading || loadingStates.slider) ? 'not-allowed' : 'pointer',
                                 fontSize: '10px',
                                 fontWeight: '600',
                                 transition: 'all 0.3s ease',
@@ -269,24 +372,21 @@ function DevicePage() {
                                     sliderPos === 'home'
                                         ? '0 4px 12px rgba(16, 185, 129, 0.4)'
                                         : 'none',
-                                opacity: isLoading ? 0.6 : 1,
+                                opacity: (isLoading || loadingStates.slider) ? 0.6 : 1,
+                                ...(loadingStates.slider ? { animation: 'pulse 1.5s infinite ease-in-out' } : {}),
                             }}
                             onMouseEnter={(e) => {
-                                if (!isLoading && sliderPos !== 'home') {
-                                    e.target.style.backgroundColor =
-                                        'rgba(16, 185, 129, 0.3)';
-                                    e.target.style.boxShadow =
-                                        '0 2px 8px rgba(16, 185, 129, 0.2)';
+                                if (!isLoading && !loadingStates.slider && sliderPos !== 'home') {
+                                    e.target.style.backgroundColor = 'rgba(16, 185, 129, 0.3)';
+                                    e.target.style.boxShadow = '0 2px 8px rgba(16, 185, 129, 0.2)';
                                 }
                             }}
                             onMouseLeave={(e) => {
                                 if (sliderPos !== 'home') {
-                                    e.target.style.backgroundColor =
-                                        'rgba(100, 116, 139, 0.3)';
+                                    e.target.style.backgroundColor = 'rgba(100, 116, 139, 0.3)';
                                     e.target.style.boxShadow = 'none';
                                 }
                             }}
-                            disabled={isLoading}
                         >
                             H
                         </button>
@@ -295,16 +395,14 @@ function DevicePage() {
                         {Array.from({ length: 12 }, (_, i) => {
                             const position = i + 1;
                             const positionStr = String(position);
-                            const isDisabled = position > 3; // Only 1, 2, 3 are enabled
+                            const isDisabled = position > 3; // Hanya 1, 2, 3 yang diaktifkan
                             const isActive = sliderPos === positionStr;
 
                             return (
                                 <button
                                     key={position}
-                                    onClick={() =>
-                                        handleSliderChange(positionStr)
-                                    }
-                                    disabled={isLoading || isDisabled}
+                                    onClick={() => handleSliderChange(positionStr)}
+                                    disabled={isLoading || isDisabled || loadingStates.slider}
                                     style={{
                                         width: '32px',
                                         height: '32px',
@@ -318,7 +416,7 @@ function DevicePage() {
                                         color: '#ffffff',
                                         cursor: isDisabled
                                             ? 'not-allowed'
-                                            : isLoading
+                                            : (isLoading || loadingStates.slider)
                                               ? 'not-allowed'
                                               : 'pointer',
                                         fontSize: '12px',
@@ -329,26 +427,20 @@ function DevicePage() {
                                             : 'none',
                                         opacity: isDisabled
                                             ? 0.3
-                                            : isLoading
+                                            : (isLoading || loadingStates.slider)
                                               ? 0.6
                                               : 1,
+                                        ...(loadingStates.slider && !isDisabled ? { animation: 'pulse 1.5s infinite ease-in-out' } : {}),
                                     }}
                                     onMouseEnter={(e) => {
-                                        if (
-                                            !isLoading &&
-                                            !isDisabled &&
-                                            !isActive
-                                        ) {
-                                            e.target.style.backgroundColor =
-                                                'rgba(16, 185, 129, 0.3)';
-                                            e.target.style.boxShadow =
-                                                '0 2px 8px rgba(16, 185, 129, 0.2)';
+                                        if (!isLoading && !loadingStates.slider && !isDisabled && !isActive) {
+                                            e.target.style.backgroundColor = 'rgba(16, 185, 129, 0.3)';
+                                            e.target.style.boxShadow = '0 2px 8px rgba(16, 185, 129, 0.2)';
                                         }
                                     }}
                                     onMouseLeave={(e) => {
                                         if (!isActive && !isDisabled) {
-                                            e.target.style.backgroundColor =
-                                                'rgba(100, 116, 139, 0.3)';
+                                            e.target.style.backgroundColor = 'rgba(100, 116, 139, 0.3)';
                                             e.target.style.boxShadow = 'none';
                                         }
                                     }}
@@ -393,13 +485,13 @@ function DevicePage() {
                     </h4>
                     <label
                         className="toggle-switch"
-                        style={{ justifyContent: 'center' }}
+                        style={{ justifyContent: 'center', ...getToggleStyle('pompa') }}
                     >
                         <input
                             type="checkbox"
                             checked={isPumpOn}
                             onChange={handlePumpToggle}
-                            disabled={isLoading}
+                            disabled={isLoading || loadingStates.pompa}
                         />
                         <span className="toggle-slider"></span>
                     </label>
@@ -429,12 +521,13 @@ function DevicePage() {
                     </h4>
                     <label
                         className="toggle-switch"
-                        style={{ justifyContent: 'center' }}
+                        style={{ justifyContent: 'center', ...getToggleStyle('auto_mode') }}
                     >
                         <input
                             type="checkbox"
                             checked={isFuzzyOn}
-                            onChange={() => setIsFuzzyOn(!isFuzzyOn)}
+                            onChange={handleFuzzyToggle}
+                            disabled={isLoading || loadingStates.auto_mode}
                         />
                         <span className="toggle-slider"></span>
                     </label>
