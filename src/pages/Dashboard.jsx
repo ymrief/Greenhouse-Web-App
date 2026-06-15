@@ -1,9 +1,93 @@
+import { useState, useEffect } from 'react';
 import MonitoringCard from '../components/MonitoringCard';
 import { useSensorHistory } from '../hooks/useSensorHistory';
+import apiService from '../services/apiService';
 
 function Dashboard() {
     // Memanggil hook (jika backend mati, error akan terisi)
     const { historyData, isLoading, error } = useSensorHistory(1);
+
+    // Actuator states synchronized with Device Control
+    const [isPumpOn, setIsPumpOn] = useState(false);
+    const [isFuzzyOn, setIsFuzzyOn] = useState(false);
+    const [sliderPos, setSliderPos] = useState('home');
+    const [isMotorMoving, setIsMotorMoving] = useState(false);
+
+    // Load initial control state on mount
+    useEffect(() => {
+        let isMounted = true;
+        const fetchInitialState = async () => {
+            try {
+                const response = await apiService.deviceAPI.getControlState();
+                if (isMounted && response?.data) {
+                    const data = response.data;
+                    setIsPumpOn(data.is_pump_on || false);
+                    setIsFuzzyOn(data.is_auto_mode || false);
+                    setSliderPos(data.slider_pos || 'home');
+                }
+            } catch (err) {
+                console.error('[Dashboard] Gagal memuat status kontrol awal:', err);
+            }
+        };
+        fetchInitialState();
+        return () => {
+            isMounted = false;
+        };
+    }, []);
+
+    // Connect to Control WebSocket for real-time actuator updates
+    useEffect(() => {
+        const ws = new apiService.ControlWebSocketClient();
+
+        ws.connect()
+            .then(() => {
+                console.log('[WS] Dashboard berhasil berlangganan event kontrol pada /ws/control.');
+            })
+            .catch((err) => {
+                console.error('[WS] Gagal menghubungkan WebSocket Kontrol pada Dashboard', err);
+            });
+
+        ws.on('message', (message) => {
+            if (!message || !message.type) return;
+
+            const { type, device, target, action } = message;
+
+            if (type === 'control_pending') {
+                if (device === 'slider') {
+                    setIsMotorMoving(true);
+                }
+            } else if (type === 'control_success') {
+                if (device === 'pompa') {
+                    setIsPumpOn(action === 'on');
+                } else if (device === 'slider') {
+                    setSliderPos(target);
+                    setIsMotorMoving(false);
+                } else if (device === 'auto_mode') {
+                    setIsFuzzyOn(action === 'on');
+                }
+            } else if (type === 'control_failure') {
+                if (device === 'slider') {
+                    setIsMotorMoving(false);
+                }
+            }
+        });
+
+        return () => {
+            ws.disconnect();
+        };
+    }, []);
+
+    const getSliderPosDisplay = () => {
+        if (sliderPos === 'home') return 'Home';
+        if (['1', '2', '3'].includes(sliderPos)) return `Posisi ${sliderPos}`;
+        return typeof sliderPos === 'string' ? sliderPos.toUpperCase() : sliderPos;
+    };
+
+    const getPumpDisplay = () => {
+        const status = isPumpOn ? 'Nyala' : 'Mati';
+        const mode = isFuzzyOn ? 'Otomatis' : 'Manual';
+        return `${status} (${mode})`;
+    };
 
     // 1. SAFE EXTRACTION (Menggunakan Optional Chaining ?. agar tidak crash jika array kosong)
     const latestRecord = historyData?.[0];
@@ -212,9 +296,9 @@ function Dashboard() {
                     gap: '20px',
                 }}
             >
-                <StatusCard title="Posisi Slider" value="1 / 12" />
-                <StatusCard title="Status Pompa Air" value="Otomatis" />
-                <StatusCard title="Status Slider" value="Steady" />
+                <StatusCard title="Posisi Slider" value={getSliderPosDisplay()} />
+                <StatusCard title="Status Pompa Air" value={getPumpDisplay()} />
+                <StatusCard title="Status Slider" value={isMotorMoving ? 'Bergerak' : 'Steady'} />
             </div>
         </div>
     );
