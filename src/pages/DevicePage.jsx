@@ -285,8 +285,8 @@ function DevicePage() {
                                     display: 'flex',
                                     flexDirection: 'column',
                                     alignItems: 'center',
-                                    opacity: isDisabled ? 0.5 : 1,
-                                    pointerEvents: isDisabled ? 'none' : 'auto',
+                                    opacity: (isDisabled || isFuzzyOn) ? 0.5 : 1,
+                                    pointerEvents: (isDisabled || isFuzzyOn) ? 'none' : 'auto',
                                 }}
                             >
                                 <label 
@@ -297,7 +297,7 @@ function DevicePage() {
                                         type="checkbox"
                                         checked={isOn}
                                         onChange={() => handleValveToggle(valve)}
-                                        disabled={isLoading || isDisabled || isPending}
+                                        disabled={isLoading || isDisabled || isPending || isFuzzyOn}
                                     />
                                     <span className="toggle-slider"></span>
                                 </label>
@@ -353,7 +353,7 @@ function DevicePage() {
                         {/* Home button */}
                         <button
                             onClick={() => handleSliderChange('home')}
-                            disabled={isLoading || loadingStates.slider}
+                            disabled={isLoading || loadingStates.slider || isFuzzyOn}
                             style={{
                                 width: '40px',
                                 height: '40px',
@@ -364,7 +364,7 @@ function DevicePage() {
                                         ? '#10b981'
                                         : 'rgba(100, 116, 139, 0.3)',
                                 color: '#ffffff',
-                                cursor: (isLoading || loadingStates.slider) ? 'not-allowed' : 'pointer',
+                                cursor: (isLoading || loadingStates.slider || isFuzzyOn) ? 'not-allowed' : 'pointer',
                                 fontSize: '10px',
                                 fontWeight: '600',
                                 transition: 'all 0.3s ease',
@@ -372,11 +372,11 @@ function DevicePage() {
                                     sliderPos === 'home'
                                         ? '0 4px 12px rgba(16, 185, 129, 0.4)'
                                         : 'none',
-                                opacity: (isLoading || loadingStates.slider) ? 0.6 : 1,
+                                opacity: (isLoading || loadingStates.slider || isFuzzyOn) ? 0.4 : 1,
                                 ...(loadingStates.slider ? { animation: 'pulse 1.5s infinite ease-in-out' } : {}),
                             }}
                             onMouseEnter={(e) => {
-                                if (!isLoading && !loadingStates.slider && sliderPos !== 'home') {
+                                if (!isLoading && !loadingStates.slider && !isFuzzyOn && sliderPos !== 'home') {
                                     e.target.style.backgroundColor = 'rgba(16, 185, 129, 0.3)';
                                     e.target.style.boxShadow = '0 2px 8px rgba(16, 185, 129, 0.2)';
                                 }
@@ -402,7 +402,7 @@ function DevicePage() {
                                 <button
                                     key={position}
                                     onClick={() => handleSliderChange(positionStr)}
-                                    disabled={isLoading || isDisabled || loadingStates.slider}
+                                    disabled={isLoading || isDisabled || loadingStates.slider || isFuzzyOn}
                                     style={{
                                         width: '32px',
                                         height: '32px',
@@ -416,7 +416,7 @@ function DevicePage() {
                                         color: '#ffffff',
                                         cursor: isDisabled
                                             ? 'not-allowed'
-                                            : (isLoading || loadingStates.slider)
+                                            : (isLoading || loadingStates.slider || isFuzzyOn)
                                               ? 'not-allowed'
                                               : 'pointer',
                                         fontSize: '12px',
@@ -427,13 +427,13 @@ function DevicePage() {
                                             : 'none',
                                         opacity: isDisabled
                                             ? 0.3
-                                            : (isLoading || loadingStates.slider)
-                                              ? 0.6
+                                            : (isLoading || loadingStates.slider || isFuzzyOn)
+                                              ? 0.4
                                               : 1,
                                         ...(loadingStates.slider && !isDisabled ? { animation: 'pulse 1.5s infinite ease-in-out' } : {}),
                                     }}
                                     onMouseEnter={(e) => {
-                                        if (!isLoading && !loadingStates.slider && !isDisabled && !isActive) {
+                                        if (!isLoading && !loadingStates.slider && !isDisabled && !isActive && !isFuzzyOn) {
                                             e.target.style.backgroundColor = 'rgba(16, 185, 129, 0.3)';
                                             e.target.style.boxShadow = '0 2px 8px rgba(16, 185, 129, 0.2)';
                                         }
@@ -470,6 +470,8 @@ function DevicePage() {
                         border: '1px solid rgba(255, 255, 255, 0.1)',
                         boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)',
                         textAlign: 'center',
+                        opacity: isFuzzyOn ? 0.5 : 1,
+                        pointerEvents: isFuzzyOn ? 'none' : 'auto',
                     }}
                 >
                     <h4
@@ -491,7 +493,7 @@ function DevicePage() {
                             type="checkbox"
                             checked={isPumpOn}
                             onChange={handlePumpToggle}
-                            disabled={isLoading || loadingStates.pompa}
+                            disabled={isLoading || loadingStates.pompa || isFuzzyOn}
                         />
                         <span className="toggle-slider"></span>
                     </label>
