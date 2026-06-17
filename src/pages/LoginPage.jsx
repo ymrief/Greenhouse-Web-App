@@ -23,7 +23,7 @@ function LoginPage() {
         try {
             const response = await authAPI.login(username, password);
             if (response.data && response.data.success) {
-                loginAdmin();
+                loginAdmin(username);
                 navigate('/');
             } else {
                 setError(response.data?.message || 'Username atau password salah');

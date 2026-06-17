@@ -6,8 +6,9 @@ export const AuthContext = createContext();
 
 // 2. Membuat komponen Provider yang akan membungkus aplikasi
 export function AuthProvider({ children }) {
-    // State untuk menyimpan status login (default: false)
+    // State untuk menyimpan status login dan data admin
     const [isAdmin, setIsAdmin] = useState(false);
+    const [adminUser, setAdminUser] = useState(null);
     const [loading, setLoading] = useState(true);
 
     // Fungsi untuk mengecek status login dari backend secara stateless
@@ -16,11 +17,14 @@ export function AuthProvider({ children }) {
             const response = await authAPI.checkSession();
             if (response.data && response.data.success) {
                 setIsAdmin(true);
+                setAdminUser(response.data.admin?.username || 'Operator');
             } else {
                 setIsAdmin(false);
+                setAdminUser(null);
             }
         } catch (err) {
             setIsAdmin(false);
+            setAdminUser(null);
         } finally {
             setLoading(false);
         }
@@ -31,13 +35,19 @@ export function AuthProvider({ children }) {
         checkSession();
     }, []);
 
-    // Fungsi untuk mengubah status
-    const loginAdmin = () => setIsAdmin(true);
-    const logoutAdmin = () => setIsAdmin(false);
+    // Fungsi untuk mengubah status login
+    const loginAdmin = (username) => {
+        setIsAdmin(true);
+        setAdminUser(username || 'Operator');
+    };
+    const logoutAdmin = () => {
+        setIsAdmin(false);
+        setAdminUser(null);
+    };
 
     return (
         // Membagikan variabel dan fungsi ini ke seluruh komponen di dalamnya
-        <AuthContext.Provider value={{ isAdmin, loading, loginAdmin, logoutAdmin, checkSession }}>
+        <AuthContext.Provider value={{ isAdmin, adminUser, loading, loginAdmin, logoutAdmin, checkSession }}>
             {children}
         </AuthContext.Provider>
     );

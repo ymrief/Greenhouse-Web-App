@@ -1,19 +1,22 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useContext } from 'react';
 import MonitoringCard from '../components/MonitoringCard';
 import { useSensorHistory } from '../hooks/useSensorHistory';
 import apiService from '../services/apiService';
+import { AuthContext } from '../context/AuthContext';
 
 function Dashboard() {
+    const { isAdmin, adminUser } = useContext(AuthContext);
+
     // Memanggil hook (jika backend mati, error akan terisi)
     const { historyData, isLoading, error } = useSensorHistory(1);
 
-    // Actuator states synchronized with Device Control
+    // Status aktuator yang disinkronkan dengan Kontrol Perangkat
     const [isPumpOn, setIsPumpOn] = useState(false);
     const [isFuzzyOn, setIsFuzzyOn] = useState(false);
     const [sliderPos, setSliderPos] = useState('home');
     const [isMotorMoving, setIsMotorMoving] = useState(false);
 
-    // Load initial control state on mount
+    // Memuat status kontrol awal saat komponen dipasang (mount)
     useEffect(() => {
         let isMounted = true;
         const fetchInitialState = async () => {
@@ -26,7 +29,10 @@ function Dashboard() {
                     setSliderPos(data.slider_pos || 'home');
                 }
             } catch (err) {
-                console.error('[Dashboard] Gagal memuat status kontrol awal:', err);
+                console.error(
+                    '[Dashboard] Gagal memuat status kontrol awal:',
+                    err,
+                );
             }
         };
         fetchInitialState();
@@ -35,16 +41,21 @@ function Dashboard() {
         };
     }, []);
 
-    // Connect to Control WebSocket for real-time actuator updates
+    // Hubungkan ke WebSocket Kontrol untuk pembaruan aktuator secara real-time
     useEffect(() => {
         const ws = new apiService.ControlWebSocketClient();
 
         ws.connect()
             .then(() => {
-                console.log('[WS] Dashboard berhasil berlangganan event kontrol pada /ws/control.');
+                console.log(
+                    '[WS] Dashboard berhasil berlangganan event kontrol pada /ws/control.',
+                );
             })
             .catch((err) => {
-                console.error('[WS] Gagal menghubungkan WebSocket Kontrol pada Dashboard', err);
+                console.error(
+                    '[WS] Gagal menghubungkan WebSocket Kontrol pada Dashboard',
+                    err,
+                );
             });
 
         ws.on('message', (message) => {
@@ -77,19 +88,23 @@ function Dashboard() {
         };
     }, []);
 
-    const getSliderPosDisplay = () => {
+    // Mendapatkan teks tampilan untuk posisi slider
+    const getSliderPositionDisplay = () => {
         if (sliderPos === 'home') return 'Home';
         if (['1', '2', '3'].includes(sliderPos)) return `Posisi ${sliderPos}`;
-        return typeof sliderPos === 'string' ? sliderPos.toUpperCase() : sliderPos;
+        return typeof sliderPos === 'string'
+            ? sliderPos.toUpperCase()
+            : sliderPos;
     };
 
-    const getPumpDisplay = () => {
+    // Mendapatkan teks tampilan untuk status pompa air
+    const getPumpStatusDisplay = () => {
         const status = isPumpOn ? 'Nyala' : 'Mati';
         const mode = isFuzzyOn ? 'Otomatis' : 'Manual';
         return `${status} (${mode})`;
     };
 
-    // 1. SAFE EXTRACTION (Menggunakan Optional Chaining ?. agar tidak crash jika array kosong)
+    // 1. EKSTRAKSI AMAN (Menggunakan Optional Chaining ?. agar tidak crash jika array kosong)
     const latestRecord = historyData?.[0];
     const latestData = latestRecord?.data; // Mengambil objek 'data' jika record ada
     const latestTime = latestRecord?.timestamp
@@ -97,29 +112,37 @@ function Dashboard() {
         : '--';
 
     // 2. FORMALISASI FORMAT TEKS (Gunakan '--' jika data tidak tersedia)
-    const displaySuhu =
+    const displayAirTemperature =
         latestData?.temp_1 !== undefined ? `${latestData.temp_1}°C` : '--';
-    const displayKelembapanUdara =
+    const displayAirHumidity =
         latestData?.humidity_1 !== undefined
             ? `RH ${latestData.humidity_1}%`
             : '--';
-    const displayCahaya =
+    const displayLightIntensity =
         latestData?.light_1 !== undefined ? `${latestData.light_1} Lux` : '--';
 
+    // Mengambil data penggunaan air dari database backend (kolom daily_water_usage atau water_usage)
+    const displayWaterUsage =
+        latestData?.daily_water_usage !== undefined
+            ? `${latestData.daily_water_usage} L`
+            : latestData?.water_usage !== undefined
+              ? `${latestData.water_usage} L`
+              : '--';
+
     // 3. LOGIKA VISUAL PROGRESS (Wajib angka 0-100 agar komponen SVG tidak rusak)
-    const soil1 = latestData?.soil_1 ?? 0;
-    const soil2 = latestData?.soil_2 ?? 0;
-    const soil3 = latestData?.soil_3 ?? 0;
-    const soil4 = latestData?.soil_4 ?? 0;
-    const soil5 = latestData?.soil_5 ?? 0;
-    const soil6 = latestData?.soil_6 ?? 0;
-    const rerataTanah = latestRecord
-        ? Math.round((soil1 + soil2 + soil3 + soil4 + soil5 + soil6) / 6)
+    const soilMoisture1 = latestData?.soil_1 ?? 0;
+    const soilMoisture2 = latestData?.soil_2 ?? 0;
+    const soilMoisture3 = latestData?.soil_3 ?? 0;
+    const soilMoisture4 = latestData?.soil_4 ?? 0;
+    const soilMoisture5 = latestData?.soil_5 ?? 0;
+    const soilMoisture6 = latestData?.soil_6 ?? 0;
+    const averageSoilMoisture = latestRecord
+        ? Math.round((soilMoisture1 + soilMoisture2 + soilMoisture3 + soilMoisture4 + soilMoisture5 + soilMoisture6) / 6)
         : 0;
 
     return (
         <div>
-            {/* Greeting */}
+            {/* Salam Pembuka */}
             <h1
                 style={{
                     fontSize: '48px',
@@ -128,10 +151,10 @@ function Dashboard() {
                     color: '#ffffff',
                 }}
             >
-                Selamat Datang, Operator!
+                {isAdmin && adminUser ? `Selamat Datang, ${adminUser}!` : 'Selamat Datang!'}
             </h1>
 
-            {/* Main Grid Layout */}
+            {/* Tata Letak Grid Utama */}
             <div
                 style={{
                     display: 'grid',
@@ -140,7 +163,7 @@ function Dashboard() {
                     marginBottom: '40px',
                 }}
             >
-                {/* Left Side - Large Soil Moisture Card */}
+                {/* Sisi Kiri - Kartu Kelembapan Tanah Besar */}
                 <div
                     style={{
                         padding: '30px',
@@ -169,7 +192,7 @@ function Dashboard() {
                             marginBottom: '20px',
                         }}
                     >
-                        <CircularProgress value={rerataTanah} />
+                        <CircularProgress value={averageSoilMoisture} />
                     </div>
                     <div
                         style={{
@@ -191,7 +214,7 @@ function Dashboard() {
                     </div>
                 </div>
 
-                {/* Right Side - Three Monitoring Cards */}
+                {/* Sisi Kanan - Tiga Kartu Pemantauan */}
                 <div
                     style={{
                         display: 'flex',
@@ -222,7 +245,7 @@ function Dashboard() {
                                     color: '#10b981',
                                 }}
                             >
-                                {displaySuhu}
+                                {displayAirTemperature}
                             </div>
                         </div>
                         <span style={{ fontSize: '40px' }}>🌡️</span>
@@ -251,7 +274,7 @@ function Dashboard() {
                                     color: '#10b981',
                                 }}
                             >
-                                {displayKelembapanUdara}
+                                {displayAirHumidity}
                             </div>
                         </div>
                         <span style={{ fontSize: '40px' }}>💧</span>
@@ -280,7 +303,7 @@ function Dashboard() {
                                     color: '#10b981',
                                 }}
                             >
-                                {displayCahaya}
+                                {displayLightIntensity}
                             </div>
                         </div>
                         <span style={{ fontSize: '40px' }}>☀️</span>
@@ -288,7 +311,7 @@ function Dashboard() {
                 </div>
             </div>
 
-            {/* Bottom Status Cards */}
+            {/* Kartu Status Bagian Bawah */}
             <div
                 style={{
                     display: 'grid',
@@ -296,9 +319,12 @@ function Dashboard() {
                     gap: '20px',
                 }}
             >
-                <StatusCard title="Posisi Slider" value={getSliderPosDisplay()} />
-                <StatusCard title="Status Pompa Air" value={getPumpDisplay()} />
-                <StatusCard title="Status Slider" value={isMotorMoving ? 'Bergerak' : 'Steady'} />
+                <StatusCard
+                    title="Posisi Slider"
+                    value={getSliderPositionDisplay()}
+                />
+                <StatusCard title="Status Pompa Air" value={getPumpStatusDisplay()} />
+                <StatusCard title="Penggunaan Air Hari Ini" value={displayWaterUsage} />
             </div>
         </div>
     );
@@ -310,7 +336,7 @@ function CircularProgress({ value }) {
 
     return (
         <svg width="120" height="120">
-            {/* Background Circle */}
+            {/* Lingkaran Latar Belakang */}
             <circle
                 cx="60"
                 cy="60"
@@ -319,7 +345,7 @@ function CircularProgress({ value }) {
                 strokeWidth="8"
                 fill="none"
             />
-            {/* Progress Circle */}
+            {/* Lingkaran Kemajuan */}
             <circle
                 cx="60"
                 cy="60"
@@ -332,7 +358,7 @@ function CircularProgress({ value }) {
                 strokeLinecap="round"
                 style={{ transition: 'stroke-dashoffset 0.3s ease' }}
             />
-            {/* Text */}
+            {/* Teks Angka */}
             <text
                 x="60"
                 y="70"

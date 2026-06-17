@@ -27,7 +27,7 @@ function HistoryPage() {
         fetchLogs();
     }, []);
 
-    // Filter logs berdasarkan input pencarian
+    // Memfilter log berdasarkan kata kunci pencarian
     const filteredLogs = logs.filter(
         (log) =>
             (log.action && log.action.toLowerCase().includes(searchQuery.toLowerCase())) ||
@@ -36,8 +36,56 @@ function HistoryPage() {
             (log.created_at && log.created_at.includes(searchQuery)),
     );
 
-    // Definisi Kolom Dinamis (Dynamic Columns)
-    const columns = [
+    // Memetakan perintah teknis ke bahasa yang mudah dimengerti pengguna
+    const formatCommand = (action) => {
+        if (!action) return '--';
+        const actionLower = action.toLowerCase();
+        if (actionLower === 'pump_on') return 'Nyalakan Pompa';
+        if (actionLower === 'pump_off') return 'Matikan Pompa';
+        if (actionLower === 'valve_on') return 'Buka Valve';
+        if (actionLower === 'valve_off') return 'Tutup Valve';
+        if (actionLower === 'move_to') return 'Geser Slider';
+        return action;
+    };
+
+    // Memetakan target teknis ke nama perangkat yang deskriptif
+    const formatTarget = (log) => {
+        const payload = log.payload_sent || {};
+        const action = log.action || '';
+        const actionLower = action.toLowerCase();
+        
+        if (actionLower.includes('pump')) {
+            return 'Pompa Air';
+        }
+        
+        const target = payload.target || log.device_target;
+        if (!target) return 'Sistem';
+        
+        const targetStr = String(target).toUpperCase();
+        if (targetStr === 'SWITCH_HOME' || targetStr === 'HOME') return 'Home Position';
+        if (targetStr === 'SWITCH_1' || targetStr === '1') return 'Posisi 1';
+        if (targetStr === 'SWITCH_2' || targetStr === '2') return 'Posisi 2';
+        if (targetStr === 'SWITCH_3' || targetStr === '3') return 'Posisi 3';
+        if (targetStr === 'VALVE_1') return 'Solenoid Valve 1';
+        if (targetStr === 'VALVE_2') return 'Solenoid Valve 2';
+        
+        return target;
+    };
+
+    // Menghasilkan objek gaya visual status badge berdasarkan nilai status log
+    const getStatusBadgeConfig = (status) => {
+        const statusLower = status ? status.toLowerCase() : '';
+        if (statusLower === 'done' || statusLower === 'success') {
+            return { text: 'Selesai', color: '#10b981', bgColor: 'rgba(16, 185, 129, 0.15)' };
+        }
+        if (statusLower === 'sent' || statusLower === 'pending') {
+            return { text: 'Proses...', color: '#3b82f6', bgColor: 'rgba(59, 130, 246, 0.15)' };
+        }
+        return { text: 'Gagal', color: '#ef4444', bgColor: 'rgba(239, 68, 68, 0.15)' };
+    };
+
+    // Definisi Kolom Tabel Dinamis
+    const tableColumns = [
         {
             key: 'created_at',
             label: 'Waktu',
@@ -45,51 +93,69 @@ function HistoryPage() {
             render: (val) => (val ? new Date(val).toLocaleString('id-ID') : '--'),
         },
         {
+            key: 'is_automated',
+            label: 'Mode',
+            width: '110px',
+            render: (val) => (val ? '🤖 Otomatis' : '👤 Manual'),
+        },
+        {
+            key: 'action',
+            label: 'Perintah',
+            width: '150px',
+            render: (val) => formatCommand(val),
+        },
+        {
             key: 'device_target',
-            label: 'Perangkat',
-            width: '140px',
-            render: (val) => val || 'Sistem',
+            label: 'Tujuan',
+            width: '150px',
+            render: (val, log) => formatTarget(log),
         },
         {
             key: 'status',
             label: 'Status',
-            width: '110px',
+            width: '130px',
             render: (val) => {
-                const color =
-                    val === 'success' || val === 'Success' || val === 'sent'
-                        ? '#10b981'
-                        : '#ef4444';
+                const badge = getStatusBadgeConfig(val);
                 return (
-                    <span style={{ color, fontWeight: '600' }}>
-                        {val ? val.toUpperCase() : 'SENT'}
+                    <span
+                        style={{
+                            color: badge.color,
+                            backgroundColor: badge.bgColor,
+                            padding: '4px 10px',
+                            borderRadius: '20px',
+                            fontSize: '12px',
+                            fontWeight: '600',
+                            border: `1px solid ${badge.color}30`,
+                            display: 'inline-block',
+                        }}
+                    >
+                        {badge.text}
                     </span>
                 );
             },
         },
         {
-            key: 'is_automated',
-            label: 'Mode',
-            width: '120px',
-            render: (val) => (val ? '🤖 Otomatis' : '👤 Manual'),
-        },
-        {
-            key: 'action',
-            label: 'Aksi',
+            key: 'detail',
+            label: 'Detail Eksekusi',
             width: '1fr',
-            render: (val) => val,
-        },
-        {
-            key: 'retry_count',
-            label: 'Retry',
-            width: '70px',
-            render: (val) => val,
+            render: (_, log) => {
+                const durationText = log.duration_ms !== null && log.duration_ms !== undefined 
+                    ? `${log.duration_ms} ms` 
+                    : null;
+                const retryText = log.retry_count > 0 ? `Retry: ${log.retry_count}` : null;
+                
+                if (durationText && retryText) return `${durationText} (${retryText})`;
+                if (durationText) return durationText;
+                if (retryText) return retryText;
+                return '--';
+            },
         },
     ];
 
     // Menggabungkan konfigurasi lebar kolom untuk gridTemplateColumns CSS
-    const gridTemplateColumns = columns.map((col) => col.width).join(' ');
+    const gridTemplateColumns = tableColumns.map((col) => col.width).join(' ');
 
-    // Pagination
+    // Manajemen Halaman (Pagination)
     const totalPages = Math.ceil(filteredLogs.length / itemsPerPage);
     const startIndex = (currentPage - 1) * itemsPerPage;
     const endIndex = startIndex + itemsPerPage;
@@ -97,7 +163,7 @@ function HistoryPage() {
 
     return (
         <div>
-            {/* Title */}
+            {/* Judul Halaman */}
             <h1
                 style={{
                     fontSize: '48px',
@@ -106,10 +172,10 @@ function HistoryPage() {
                     color: '#ffffff',
                 }}
             >
-                Log Activities
+                Log Aktivitas
             </h1>
 
-            {/* Search Box */}
+            {/* Kotak Pencarian */}
             <div
                 style={{
                     marginBottom: '30px',
@@ -157,7 +223,7 @@ function HistoryPage() {
                 </div>
             </div>
 
-            {/* Table Container */}
+            {/* Wadah Tabel Log */}
             <div
                 style={{
                     borderRadius: '12px',
@@ -167,7 +233,7 @@ function HistoryPage() {
                     boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)',
                 }}
             >
-                {/* Table Header secara dinamis */}
+                {/* Header Tabel */}
                 <div
                     style={{
                         display: 'grid',
@@ -178,7 +244,7 @@ function HistoryPage() {
                         borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
                     }}
                 >
-                    {columns.map((col) => (
+                    {tableColumns.map((col) => (
                         <div
                             key={col.key}
                             style={{
@@ -192,7 +258,7 @@ function HistoryPage() {
                     ))}
                 </div>
 
-                {/* Table Body */}
+                {/* Konten Utama Tabel */}
                 {isLoading ? (
                     <div style={{ padding: '40px 20px', textAlign: 'center', color: '#cbd5e1' }}>
                         Memuat log aktivitas...
@@ -214,9 +280,9 @@ function HistoryPage() {
                                 alignItems: 'center',
                             }}
                         >
-                            {columns.map((col) => (
+                            {tableColumns.map((col) => (
                                 <div key={col.key} style={{ color: '#cbd5e1', fontSize: '13px' }}>
-                                    {col.render(log[col.key])}
+                                    {col.render(log[col.key], log)}
                                 </div>
                             ))}
                         </div>
@@ -234,7 +300,7 @@ function HistoryPage() {
                 )}
             </div>
 
-            {/* Pagination */}
+            {/* Navigasi Halaman (Pagination) */}
             {totalPages > 1 && (
                 <div
                     style={{
@@ -245,7 +311,7 @@ function HistoryPage() {
                         marginTop: '30px',
                     }}
                 >
-                    {/* Previous Button */}
+                    {/* Tombol Sebelumnya */}
                     <button
                         onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                         disabled={currentPage === 1}
@@ -261,10 +327,10 @@ function HistoryPage() {
                             fontWeight: '500',
                         }}
                     >
-                        ← Previous
+                        ← Sebelumnya
                     </button>
 
-                    {/* Page Numbers */}
+                    {/* Angka Halaman */}
                     <div style={{ display: 'flex', gap: '5px' }}>
                         {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
                             <button
@@ -293,7 +359,7 @@ function HistoryPage() {
                         ))}
                     </div>
 
-                    {/* Next Button */}
+                    {/* Tombol Berikutnya */}
                     <button
                         onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
                         disabled={currentPage === totalPages}
@@ -311,7 +377,7 @@ function HistoryPage() {
                             fontWeight: '500',
                         }}
                     >
-                        Next →
+                        Berikutnya →
                     </button>
                 </div>
             )}

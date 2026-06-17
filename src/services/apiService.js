@@ -24,7 +24,8 @@ const getWsUrl = () => {
 };
 
 const getControlWsUrl = () => {
-    if (typeof window === 'undefined') return 'ws://192.168.31.34:8000/ws/control';
+    if (typeof window === 'undefined')
+        return 'ws://192.168.31.34:8000/ws/control';
     if (import.meta.env?.VITE_CONTROL_WS_URL) {
         return import.meta.env.VITE_CONTROL_WS_URL;
     }
@@ -35,7 +36,6 @@ const getControlWsUrl = () => {
 const API_BASE_URL = getApiBaseUrl();
 const WEBSOCKET_URL = getWsUrl();
 const CONTROL_WEBSOCKET_URL = getControlWsUrl();
-
 
 // Create axios instance
 export const apiClient = axios.create({
@@ -54,7 +54,8 @@ export const authAPI = {
      * @param {string} username
      * @param {string} password
      */
-    login: (username, password) => apiClient.post('/api/auth/login', { username, password }),
+    login: (username, password) =>
+        apiClient.post('/api/auth/login', { username, password }),
 
     /**
      * Clear operator session cookie
@@ -161,7 +162,8 @@ export const wateringAPI = {
      * @param {boolean} isAuto
      * @returns {Promise}
      */
-    toggleAutoMode: (isAuto) => apiClient.post('/auto/mode', { is_auto: isAuto }),
+    toggleAutoMode: (isAuto) =>
+        apiClient.post('/auto/mode', { is_auto: isAuto }),
 };
 
 // ==================== DEVICE GROUPS ====================
