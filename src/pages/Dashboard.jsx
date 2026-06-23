@@ -8,13 +8,13 @@ function Dashboard() {
     const { isAdmin, adminUser } = useContext(AuthContext);
 
     // Memanggil hook (jika backend mati, error akan terisi)
-    const { historyData, isLoading, error } = useSensorHistory(1);
+    const { historyData } = useSensorHistory(1);
 
     // Status aktuator yang disinkronkan dengan Kontrol Perangkat
     const [isPumpOn, setIsPumpOn] = useState(false);
     const [isFuzzyOn, setIsFuzzyOn] = useState(false);
     const [sliderPos, setSliderPos] = useState('home');
-    const [isMotorMoving, setIsMotorMoving] = useState(false);
+    const [_isMotorMoving, setIsMotorMoving] = useState(false);
 
     // Memuat status kontrol awal saat komponen dipasang (mount)
     useEffect(() => {
@@ -107,7 +107,7 @@ function Dashboard() {
     // 1. EKSTRAKSI AMAN (Menggunakan Optional Chaining ?. agar tidak crash jika array kosong)
     const latestRecord = historyData?.[0];
     const latestData = latestRecord?.data; // Mengambil objek 'data' jika record ada
-    const latestTime = latestRecord?.timestamp
+    const _latestTime = latestRecord?.timestamp
         ? new Date(latestRecord.timestamp).toLocaleString('id-ID')
         : '--';
 
@@ -139,6 +139,7 @@ function Dashboard() {
     const averageSoilMoisture = latestRecord
         ? Math.round((soilMoisture1 + soilMoisture2 + soilMoisture3 + soilMoisture4 + soilMoisture5 + soilMoisture6) / 6)
         : 0;
+    const averageColor = getMoistureColor(averageSoilMoisture);
 
     return (
         <div>
@@ -163,54 +164,75 @@ function Dashboard() {
                     marginBottom: '40px',
                 }}
             >
-                {/* Sisi Kiri - Kartu Kelembapan Tanah Besar */}
-                <div
-                    style={{
-                        padding: '30px',
-                        borderRadius: '12px',
-                        backgroundColor: '#1e293b',
-                        border: '1px solid rgba(255, 255, 255, 0.1)',
-                        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)',
-                    }}
-                >
-                    <h3
-                        style={{
-                            color: '#cbd5e1',
-                            fontSize: '16px',
-                            fontWeight: '500',
-                            marginTop: 0,
-                            marginBottom: '25px',
-                        }}
-                    >
-                        Rerata Kelembapan Tanah
-                    </h3>
+                {/* Sisi Kiri - Rerata dan Detil Kelembapan Tanah */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                    {/* Kartu Kelembapan Tanah Besar */}
                     <div
                         style={{
-                            display: 'flex',
-                            justifyContent: 'center',
-                            alignItems: 'center',
-                            marginBottom: '20px',
+                            padding: '30px',
+                            borderRadius: '12px',
+                            backgroundColor: '#1e293b',
+                            border: '1px solid rgba(255, 255, 255, 0.1)',
+                            borderLeft: `4px solid ${averageColor}`,
+                            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)',
+                            transition: 'all 0.3s ease',
                         }}
                     >
-                        <CircularProgress value={averageSoilMoisture} />
-                    </div>
-                    <div
-                        style={{
-                            width: '100%',
-                            height: '6px',
-                            backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                            borderRadius: '3px',
-                            overflow: 'hidden',
-                        }}
-                    >
+                        <h3
+                            style={{
+                                color: '#cbd5e1',
+                                fontSize: '16px',
+                                fontWeight: '500',
+                                marginTop: 0,
+                                marginBottom: '25px',
+                            }}
+                        >
+                            Rerata Kelembapan Tanah
+                        </h3>
                         <div
                             style={{
-                                width: '75%',
-                                height: '100%',
-                                background:
-                                    'linear-gradient(90deg, #10b981 0%, #059669 100%)',
+                                display: 'flex',
+                                justifyContent: 'center',
+                                alignItems: 'center',
+                                marginBottom: '20px',
                             }}
-                        ></div>
+                        >
+                            <CircularProgress value={averageSoilMoisture} color={averageColor} />
+                        </div>
+                        <div
+                            style={{
+                                width: '100%',
+                                height: '6px',
+                                backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                                borderRadius: '3px',
+                                overflow: 'hidden',
+                            }}
+                        >
+                            <div
+                                style={{
+                                    width: `${averageSoilMoisture}%`,
+                                    height: '100%',
+                                    backgroundColor: averageColor,
+                                    transition: 'width 0.3s ease, background-color 0.3s ease',
+                                }}
+                            ></div>
+                        </div>
+                    </div>
+
+                    {/* Grid 6 Kartu Kelembapan Polybag */}
+                    <div
+                        style={{
+                            display: 'grid',
+                            gridTemplateColumns: 'repeat(3, 1fr)',
+                            gap: '15px',
+                        }}
+                    >
+                        <PolybagCard num={1} value={soilMoisture1} />
+                        <PolybagCard num={2} value={soilMoisture2} />
+                        <PolybagCard num={3} value={soilMoisture3} />
+                        <PolybagCard num={4} value={soilMoisture4} />
+                        <PolybagCard num={5} value={soilMoisture5} />
+                        <PolybagCard num={6} value={soilMoisture6} />
                     </div>
                 </div>
 
@@ -330,7 +352,72 @@ function Dashboard() {
     );
 }
 
-function CircularProgress({ value }) {
+const getMoistureColor = (value) => {
+    const val = Math.min(Math.max(value, 0), 100);
+    const hue = (val / 100) * 120;
+    return `hsl(${hue}, 80%, 45%)`;
+};
+
+function PolybagCard({ num, value }) {
+    const color = getMoistureColor(value);
+    return (
+        <div
+            style={{
+                padding: '16px',
+                borderRadius: '12px',
+                backgroundColor: '#1e293b',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
+                borderLeft: `4px solid ${color}`,
+                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between',
+                transition: 'all 0.3s ease',
+            }}
+        >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                <span style={{ color: '#cbd5e1', fontSize: '13px', fontWeight: '500' }}>
+                    Polybag {num}
+                </span>
+                <span style={{ fontSize: '16px' }}>🌱</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px' }}>
+                <span
+                    style={{
+                        fontSize: '24px',
+                        fontWeight: 'bold',
+                        color: color,
+                        transition: 'color 0.3s ease',
+                    }}
+                >
+                    {value}
+                </span>
+                <span style={{ fontSize: '12px', color: '#94a3b8' }}>%</span>
+            </div>
+            <div
+                style={{
+                    width: '100%',
+                    height: '4px',
+                    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                    borderRadius: '2px',
+                    marginTop: '10px',
+                    overflow: 'hidden',
+                }}
+            >
+                <div
+                    style={{
+                        width: `${Math.min(Math.max(value, 0), 100)}%`,
+                        height: '100%',
+                        backgroundColor: color,
+                        transition: 'width 0.3s ease, background-color 0.3s ease',
+                    }}
+                />
+            </div>
+        </div>
+    );
+}
+
+function CircularProgress({ value, color }) {
     const circumference = 2 * Math.PI * 45;
     const offset = circumference - (value / 100) * circumference;
 
@@ -350,13 +437,13 @@ function CircularProgress({ value }) {
                 cx="60"
                 cy="60"
                 r="45"
-                stroke="#10b981"
+                stroke={color || '#10b981'}
                 strokeWidth="8"
                 fill="none"
                 strokeDasharray={circumference}
                 strokeDashoffset={offset}
                 strokeLinecap="round"
-                style={{ transition: 'stroke-dashoffset 0.3s ease' }}
+                style={{ transition: 'stroke-dashoffset 0.3s ease, stroke 0.3s ease' }}
             />
             {/* Teks Angka */}
             <text
@@ -366,7 +453,8 @@ function CircularProgress({ value }) {
                 style={{
                     fontSize: '32px',
                     fontWeight: 'bold',
-                    fill: '#10b981',
+                    fill: color || '#10b981',
+                    transition: 'fill 0.3s ease',
                 }}
             >
                 {value}%
