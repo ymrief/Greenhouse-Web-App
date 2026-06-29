@@ -11,21 +11,54 @@ function HistoryPage() {
     const itemsPerPage = 10;
 
     useEffect(() => {
-        const fetchLogs = async () => {
-            try {
-                setIsLoading(true);
-                const response = await apiService.recordsAPI.getControlLogs(100);
-                setLogs(response.data);
-                setError(null);
-            } catch (err) {
-                const formattedError = apiService.handleAPIError(err);
-                setError(formattedError.message);
-            } finally {
-                setIsLoading(false);
-            }
-        };
+        const ws = new apiService.ControlLogWebSocketClient();
 
-        fetchLogs();
+        ws.connect()
+            .then(() => {
+                console.log('[WS] Connected to control logs websocket');
+            })
+            .catch((err) => {
+                console.error('[WS] Failed to connect to control logs websocket:', err);
+                setError('Koneksi real-time terputus. Silakan muat ulang halaman.');
+                setIsLoading(false);
+            });
+
+        ws.on('message', (message) => {
+            if (!message || !message.type) return;
+
+            if (message.type === 'control_log_snapshot') {
+                setLogs(message.logs || []);
+                setIsLoading(false);
+                setError(null);
+            } else if (message.type === 'control_log_new') {
+                const newLogs = message.logs || [];
+                setLogs((prevLogs) => {
+                    // Filter out any duplicate logs by id to prevent duplicates in rendering
+                    const filteredNew = newLogs.filter(
+                        (nl) => !prevLogs.some((pl) => pl.id === nl.id)
+                    );
+                    return [...filteredNew, ...prevLogs];
+                });
+            }
+        });
+
+        ws.on('error', (err) => {
+            console.error('[WS] Control logs WS error:', err);
+            setError('Terjadi kesalahan koneksi real-time.');
+        });
+
+        ws.on('disconnected', () => {
+            console.log('[WS] Control logs WS disconnected');
+        });
+
+        ws.on('maxReconnectAttemptsExceeded', () => {
+            setError('Koneksi real-time gagal terhubung kembali setelah beberapa percobaan.');
+            setIsLoading(false);
+        });
+
+        return () => {
+            ws.disconnect();
+        };
     }, []);
 
     // Memfilter log berdasarkan kata kunci pencarian
