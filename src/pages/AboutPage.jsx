@@ -173,7 +173,7 @@ function AboutPage() {
                     }}
                 >
                     <DeveloperCard
-                        name="Martinus"
+                        name="TIM AIoT"
                         role="Developer Utama"
                         details="Riset IoT, Integrasi Perangkat Lunak & Antarmuka Dashboard Web"
                     />
