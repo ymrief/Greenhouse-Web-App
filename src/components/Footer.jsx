@@ -19,7 +19,7 @@ function Footer() {
                             color: '#94a3b8',
                         }}
                     >
-                        © 2024 FIK UPNVJ. All rights reserved.
+                        © FIK UPNVJ. All rights reserved.
                     </p>
                 </div>
                 <div

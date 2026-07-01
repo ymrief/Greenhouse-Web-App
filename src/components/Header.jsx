@@ -98,16 +98,27 @@ function Header() {
                         alignItems: 'center',
                     }}
                 >
-                    {!isAdmin && (
-                        <>
-                            <Link to="/" style={navLinkStyle}>
-                                Dashboard
-                            </Link>
-                            <Link to="/about" style={navLinkStyle}>
-                                Tentang Projek
-                            </Link>
-                        </>
-                    )}
+                    <NavLink
+                        to="/"
+                        end
+                        style={({ isActive }) => ({
+                            ...navLinkStyle,
+                            color: isActive ? '#10b981' : '#cbd5e1',
+                            backgroundColor: isActive ? 'rgba(16, 185, 129, 0.12)' : 'transparent',
+                        })}
+                    >
+                        Dashboard
+                    </NavLink>
+                    <NavLink
+                        to="/about"
+                        style={({ isActive }) => ({
+                            ...navLinkStyle,
+                            color: isActive ? '#10b981' : '#cbd5e1',
+                            backgroundColor: isActive ? 'rgba(16, 185, 129, 0.12)' : 'transparent',
+                        })}
+                    >
+                        Tentang Projek
+                    </NavLink>
                 </nav>
 
                 {/* Right Section - Login/Profile */}
