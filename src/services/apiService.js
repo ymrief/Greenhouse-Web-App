@@ -35,12 +35,12 @@ const getControlWsUrl = () => {
 
 const getControlLogWsUrl = () => {
     if (typeof window === 'undefined')
-        return 'ws://192.168.31.34:8000/api/control-logs/ws/control-logs';
+        return 'ws://192.168.31.34:8000/ws/control-logs';
     if (import.meta.env?.VITE_CONTROL_LOG_WS_URL) {
         return import.meta.env.VITE_CONTROL_LOG_WS_URL;
     }
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    return `${protocol}//${window.location.host}/api/control-logs/ws/control-logs`;
+    return `${protocol}//${window.location.host}/ws/control-logs`;
 };
 
 const API_BASE_URL = getApiBaseUrl();

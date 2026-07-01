@@ -9,7 +9,7 @@ const BACKEND_WS = `ws://${BACKEND_HOST}`;
 
 // Konfigurasi proxy yang digunakan bersama oleh dev server dan preview server
 const proxyConfig = {
-    '/api/control-logs/ws/control-logs': {
+    '/ws/control-logs': {
         target: BACKEND_WS,
         ws: true,
         changeOrigin: true,
