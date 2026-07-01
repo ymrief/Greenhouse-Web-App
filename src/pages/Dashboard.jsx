@@ -99,9 +99,7 @@ function Dashboard() {
 
     // Mendapatkan teks tampilan untuk status pompa air
     const getPumpStatusDisplay = () => {
-        const status = isPumpOn ? 'Nyala' : 'Mati';
-        const mode = isFuzzyOn ? 'Otomatis' : 'Manual';
-        return `${status} (${mode})`;
+        return isPumpOn ? (isFuzzyOn ? 'Otomatis' : 'ON') : 'OFF';
     };
 
     // 1. EKSTRAKSI AMAN (Menggunakan Optional Chaining ?. agar tidak crash jika array kosong)
