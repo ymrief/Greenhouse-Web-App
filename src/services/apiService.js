@@ -12,6 +12,7 @@ const getApiBaseUrl = () => {
     }
     // Menggunakan origin frontend lokal agar browser menganggapnya Same-Site (cookie disimpan & terkirim)
     return window.location.origin;
+    // return `${window.location.origin}:8002`;
 };
 
 const getWsUrl = () => {
@@ -20,6 +21,7 @@ const getWsUrl = () => {
         return import.meta.env.VITE_WS_URL;
     }
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    // Menggunakan host yang sama (port website) karena di-proxy oleh Nginx
     return `${protocol}//${window.location.host}/ws`;
 };
 

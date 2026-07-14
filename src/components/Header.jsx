@@ -24,65 +24,29 @@ function Header() {
     return (
         <>
             {/* Header Utama */}
-            <header style={headerStyle}>
+            <header className="flex justify-between items-center px-4 md:px-10 py-4 bg-slate-800/80 text-white border-b border-slate-700/50 sticky top-0 z-40 backdrop-blur-md">
                 {/* Logo dan Burger Menu */}
-                <div
-                    style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '20px',
-                    }}
-                >
-                    {/* Burger Button untuk Admin */}
-                    {isAdmin && (
-                        <button
-                            style={burgerBtnStyle}
-                            onClick={() => setIsSidebarOpen(true)}
-                        >
-                            ☰
-                        </button>
-                    )}
+                <div className="flex items-center gap-4">
+                    {/* Burger Button - Visible on mobile, and visible on desktop ONLY IF isAdmin */}
+                    <button
+                        className={`flex ${isAdmin ? '' : 'md:hidden'} text-2xl cursor-pointer text-slate-300 hover:text-white transition-colors p-1`}
+                        onClick={() => setIsSidebarOpen(true)}
+                        aria-label="Open Menu"
+                    >
+                        ☰
+                    </button>
 
                     {/* Logo */}
-                    <Link to="/" style={{ textDecoration: 'none' }}>
-                        <div
-                            style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '10px',
-                            }}
-                        >
-                            <div
-                                style={{
-                                    width: '40px',
-                                    height: '40px',
-                                    background:
-                                        'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)',
-                                    borderRadius: '50%',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    fontSize: '24px',
-                                }}
-                            >
+                    <Link to="/" className="no-underline">
+                        <div className="flex items-center gap-2.5">
+                            <div className="w-10 h-10 bg-gradient-to-br from-emerald-400 to-green-600 rounded-full flex items-center justify-center text-xl shadow-md shadow-emerald-500/20">
                                 🌿
                             </div>
                             <div>
-                                <div
-                                    style={{
-                                        fontSize: '14px',
-                                        fontWeight: '700',
-                                        color: '#ffffff',
-                                    }}
-                                >
+                                <div className="text-sm font-bold text-white tracking-wide leading-tight">
                                     Smart Greenhouse
                                 </div>
-                                <div
-                                    style={{
-                                        fontSize: '12px',
-                                        color: '#94a3b8',
-                                    }}
-                                >
+                                <div className="text-xs text-slate-400 font-medium">
                                     FIK UPNVJ
                                 </div>
                             </div>
@@ -90,63 +54,56 @@ function Header() {
                     </Link>
                 </div>
 
-                {/* Navigation Links */}
-                <nav
-                    style={{
-                        display: 'flex',
-                        gap: '20px',
-                        alignItems: 'center',
-                    }}
-                >
+                {/* Navigation Links - Desktop Only */}
+                <nav className="hidden md:flex items-center gap-1.5">
                     <NavLink
                         to="/"
                         end
-                        style={({ isActive }) => ({
-                            ...navLinkStyle,
-                            color: isActive ? '#10b981' : '#cbd5e1',
-                            backgroundColor: isActive ? 'rgba(16, 185, 129, 0.12)' : 'transparent',
-                        })}
+                        className={({ isActive }) =>
+                            `text-sm font-semibold px-4 py-2 rounded-lg transition-all ${
+                                isActive
+                                    ? 'text-emerald-400 bg-emerald-500/10'
+                                    : 'text-slate-300 hover:text-white hover:bg-slate-700/40'
+                            }`
+                        }
                     >
                         Dashboard
                     </NavLink>
                     <NavLink
                         to="/about"
-                        style={({ isActive }) => ({
-                            ...navLinkStyle,
-                            color: isActive ? '#10b981' : '#cbd5e1',
-                            backgroundColor: isActive ? 'rgba(16, 185, 129, 0.12)' : 'transparent',
-                        })}
+                        className={({ isActive }) =>
+                            `text-sm font-semibold px-4 py-2 rounded-lg transition-all ${
+                                isActive
+                                    ? 'text-emerald-400 bg-emerald-500/10'
+                                    : 'text-slate-300 hover:text-white hover:bg-slate-700/40'
+                            }`
+                        }
                     >
                         Tentang Projek
                     </NavLink>
                 </nav>
 
-                {/* Right Section - Login/Profile */}
-                <div
-                    style={{
-                        display: 'flex',
-                        gap: '20px',
-                        alignItems: 'center',
-                    }}
-                >
+                {/* Right Section - Login/Profile - Desktop Only */}
+                <div className="hidden md:flex items-center gap-4">
                     {isAdmin ? (
-                        <div style={{ position: 'relative' }}>
+                        <div className="relative">
                             <button
-                                style={profileBtnStyle}
+                                className="w-10 h-10 rounded-full bg-slate-700/50 hover:bg-slate-700 border border-slate-600/50 text-base cursor-pointer flex items-center justify-center transition-all"
                                 onClick={() => setIsProfileOpen(!isProfileOpen)}
                             >
                                 👤
                             </button>
                             {isProfileOpen && (
-                                <div style={profileMenuStyle}>
-                                    <div style={profileMenuItemStyle}>
-                                        <span style={{ fontWeight: '600' }}>
+                                <div className="absolute right-0 mt-2 bg-slate-800 border border-slate-700/60 rounded-xl w-48 shadow-xl overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+                                    <div className="px-4 py-3 text-slate-300 text-xs border-b border-slate-700/50">
+                                        Masuk sebagai:{' '}
+                                        <span className="font-bold text-white block mt-0.5">
                                             Operator
                                         </span>
                                     </div>
                                     <button
                                         onClick={handleLogout}
-                                        style={logoutMenuItemStyle}
+                                        className="w-full text-left px-4 py-2.5 bg-red-500 hover:bg-red-600 text-white text-sm font-semibold transition-all cursor-pointer"
                                     >
                                         Logout
                                     </button>
@@ -155,267 +112,157 @@ function Header() {
                         </div>
                     ) : (
                         <Link to="/login">
-                            <button style={loginBtnStyle}>
+                            <button className="px-5 py-2 bg-emerald-500 hover:bg-emerald-600 text-white border-none rounded-lg font-bold text-sm cursor-pointer shadow-md shadow-emerald-500/10 hover:shadow-emerald-500/20 hover:-translate-y-0.5 transition-all">
                                 Login Operator
                             </button>
                         </Link>
                     )}
                 </div>
+
+                {/* Mobile Right Section Status Indicator */}
+                {!isAdmin && (
+                    <div className="flex md:hidden">
+                        <Link to="/login">
+                            <button className="px-3 py-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/20 rounded-md font-semibold text-xs transition-all">
+                                Login
+                            </button>
+                        </Link>
+                    </div>
+                )}
+                {isAdmin && (
+                    <div className="flex md:hidden">
+                        <span className="text-xs px-2.5 py-1 bg-blue-500/15 text-blue-400 border border-blue-500/20 rounded-full font-bold">
+                            Operator
+                        </span>
+                    </div>
+                )}
             </header>
 
-            {/* Sidebar untuk Admin */}
+            {/* Sidebar / Drawer untuk Mobile */}
             {isSidebarOpen && (
                 <div
-                    style={backdropStyle}
+                    className="fixed inset-0 w-screen h-screen bg-black/60 z-45 backdrop-blur-xs transition-opacity duration-305"
                     onClick={() => setIsSidebarOpen(false)}
                 ></div>
             )}
 
             <div
-                style={{
-                    ...sidebarStyle,
-                    transform: isSidebarOpen
-                        ? 'translateX(0)'
-                        : 'translateX(-100%)',
-                }}
+                className={`fixed top-0 left-0 w-72 h-screen bg-slate-900 text-white p-6 shadow-2xl z-50 transition-transform duration-300 ease-in-out border-r border-slate-800/80 flex flex-col justify-between ${
+                    isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
+                }`}
             >
-                {/* Header Sidebar */}
-                <div
-                    style={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        marginBottom: '30px',
-                        paddingBottom: '20px',
-                        borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
-                    }}
-                >
-                    <h2
-                        style={{
-                            margin: 0,
-                            fontSize: '20px',
-                            fontWeight: '700',
-                        }}
-                    >
-                        Smart Greenhouse
-                    </h2>
-                    <button
-                        onClick={() => setIsSidebarOpen(false)}
-                        style={closeBtnStyle}
-                    >
-                        ✕
-                    </button>
+                <div>
+                    {/* Header Sidebar */}
+                    <div className="flex justify-between items-center mb-8 pb-4 border-b border-slate-805">
+                        <h2 className="m-0 text-lg font-extrabold text-emerald-400 tracking-wide">
+                            Smart Greenhouse
+                        </h2>
+                        <button
+                            onClick={() => setIsSidebarOpen(false)}
+                            className="bg-transparent border-none text-slate-400 hover:text-white text-xl cursor-pointer p-1"
+                        >
+                            ✕
+                        </button>
+                    </div>
+
+                    {/* Menu Items */}
+                    <nav className="flex flex-col gap-2">
+                        <NavLink
+                            to="/"
+                            end
+                            onClick={() => setIsSidebarOpen(false)}
+                            className={({ isActive }) =>
+                                `flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-semibold transition-all border-l-4 ${
+                                    isActive
+                                        ? 'bg-emerald-500/10 border-emerald-500 text-emerald-400'
+                                        : 'border-transparent text-slate-300 hover:bg-slate-800/50 hover:text-white'
+                                }`
+                            }
+                        >
+                            📊 Dashboard
+                        </NavLink>
+
+                        {/* Tautan Khusus Admin di Sidebar */}
+                        {isAdmin && (
+                            <>
+                                <NavLink
+                                    to="/device"
+                                    onClick={() => setIsSidebarOpen(false)}
+                                    className={({ isActive }) =>
+                                        `flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-semibold transition-all border-l-4 ${
+                                            isActive
+                                                ? 'bg-emerald-500/10 border-emerald-500 text-emerald-400'
+                                                : 'border-transparent text-slate-300 hover:bg-slate-800/50 hover:text-white'
+                                        }`
+                                    }
+                                >
+                                    🎛️ Device
+                                </NavLink>
+
+                                <NavLink
+                                    to="/history"
+                                    onClick={() => setIsSidebarOpen(false)}
+                                    className={({ isActive }) =>
+                                        `flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-semibold transition-all border-l-4 ${
+                                            isActive
+                                                ? 'bg-emerald-500/10 border-emerald-500 text-emerald-400'
+                                                : 'border-transparent text-slate-300 hover:bg-slate-800/50 hover:text-white'
+                                        }`
+                                    }
+                                >
+                                    📋 History
+                                </NavLink>
+                            </>
+                        )}
+
+                        <NavLink
+                            to="/about"
+                            onClick={() => setIsSidebarOpen(false)}
+                            className={({ isActive }) =>
+                                `flex md:hidden items-center gap-3 px-4 py-3 rounded-lg text-sm font-semibold transition-all border-l-4 ${
+                                    isActive
+                                        ? 'bg-emerald-500/10 border-emerald-500 text-emerald-400'
+                                        : 'border-transparent text-slate-300 hover:bg-slate-800/50 hover:text-white'
+                                }`
+                            }
+                        >
+                            ℹ️ Tentang Projek
+                        </NavLink>
+                    </nav>
                 </div>
 
-                {/* Menu Items */}
-                <ul
-                    style={{
-                        listStyle: 'none',
-                        padding: 0,
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: '10px',
-                    }}
-                >
-                    <NavLink
-                        to="/"
-                        end
-                        onClick={() => setIsSidebarOpen(false)}
-                        style={({ isActive }) => ({
-                            ...menuItemStyle,
-                            backgroundColor: isActive
-                                ? 'rgba(16, 185, 129, 0.15)'
-                                : 'transparent',
-                            borderLeft: isActive
-                                ? '4px solid #10b981'
-                                : '4px solid transparent',
-                            color: isActive ? '#10b981' : '#cbd5e1',
-                            paddingLeft: isActive ? '16px' : '20px',
-                        })}
-                    >
-                        📊 Dashboard
-                    </NavLink>
-
-                    <NavLink
-                        to="/device"
-                        onClick={() => setIsSidebarOpen(false)}
-                        style={({ isActive }) => ({
-                            ...menuItemStyle,
-                            backgroundColor: isActive
-                                ? 'rgba(16, 185, 129, 0.15)'
-                                : 'transparent',
-                            borderLeft: isActive
-                                ? '4px solid #10b981'
-                                : '4px solid transparent',
-                            color: isActive ? '#10b981' : '#cbd5e1',
-                            paddingLeft: isActive ? '16px' : '20px',
-                        })}
-                    >
-                        🎛️ Device
-                    </NavLink>
-
-                    <NavLink
-                        to="/history"
-                        onClick={() => setIsSidebarOpen(false)}
-                        style={({ isActive }) => ({
-                            ...menuItemStyle,
-                            backgroundColor: isActive
-                                ? 'rgba(16, 185, 129, 0.15)'
-                                : 'transparent',
-                            borderLeft: isActive
-                                ? '4px solid #10b981'
-                                : '4px solid transparent',
-                            color: isActive ? '#10b981' : '#cbd5e1',
-                            paddingLeft: isActive ? '16px' : '20px',
-                        })}
-                    >
-                        📋 History
-                    </NavLink>
-                </ul>
+                {/* Footer Sidebar (Auth Status & Actions for Mobile) */}
+                <div className="pt-4 border-t border-slate-800">
+                    {isAdmin ? (
+                        <div className="flex flex-col gap-3">
+                            <div className="px-2 text-xs text-slate-400">
+                                Logged in as:{' '}
+                                <strong className="text-white block mt-0.5">
+                                    Operator
+                                </strong>
+                            </div>
+                            <button
+                                onClick={handleLogout}
+                                className="w-full py-3 bg-red-500 hover:bg-red-600 text-white rounded-lg font-bold text-sm transition-colors cursor-pointer"
+                            >
+                                Logout
+                            </button>
+                        </div>
+                    ) : (
+                        <Link
+                            to="/login"
+                            onClick={() => setIsSidebarOpen(false)}
+                            className="block no-underline"
+                        >
+                            <button className="w-full py-3 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg font-bold text-sm transition-all cursor-pointer shadow-md shadow-emerald-500/10">
+                                Login Operator
+                            </button>
+                        </Link>
+                    )}
+                </div>
             </div>
         </>
     );
 }
-
-/* Styles */
-const headerStyle = {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: '16px 40px',
-    backgroundColor: '#1e293b',
-    color: 'white',
-    borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
-    position: 'sticky',
-    top: 0,
-    zIndex: 1000,
-};
-
-const burgerBtnStyle = {
-    background: 'transparent',
-    border: 'none',
-    color: 'white',
-    fontSize: '24px',
-    cursor: 'pointer',
-    padding: '0',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-};
-
-const navLinkStyle = {
-    color: '#cbd5e1',
-    textDecoration: 'none',
-    fontSize: '14px',
-    fontWeight: '500',
-    padding: '8px 16px',
-    borderRadius: '6px',
-    transition: 'all 0.3s ease',
-    cursor: 'pointer',
-};
-
-const profileBtnStyle = {
-    background: 'rgba(255, 255, 255, 0.1)',
-    border: '1px solid rgba(255, 255, 255, 0.2)',
-    color: 'white',
-    width: '40px',
-    height: '40px',
-    borderRadius: '50%',
-    cursor: 'pointer',
-    fontSize: '18px',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    transition: 'all 0.3s ease',
-};
-
-const loginBtnStyle = {
-    padding: '10px 24px',
-    backgroundColor: '#3b82f6',
-    color: 'white',
-    border: 'none',
-    borderRadius: '6px',
-    fontWeight: '600',
-    cursor: 'pointer',
-    fontSize: '14px',
-    transition: 'all 0.3s ease',
-};
-
-const profileMenuStyle = {
-    position: 'absolute',
-    top: '50px',
-    right: '0',
-    background: '#1e293b',
-    border: '1px solid rgba(255, 255, 255, 0.1)',
-    borderRadius: '8px',
-    minWidth: '200px',
-    boxShadow: '0 10px 25px rgba(0, 0, 0, 0.3)',
-    zIndex: 1001,
-    overflow: 'hidden',
-};
-
-const profileMenuItemStyle = {
-    padding: '12px 16px',
-    color: '#cbd5e1',
-    borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
-    fontSize: '14px',
-};
-
-const logoutMenuItemStyle = {
-    width: '100%',
-    padding: '12px 16px',
-    background: '#ef4444',
-    color: 'white',
-    border: 'none',
-    cursor: 'pointer',
-    fontSize: '14px',
-    fontWeight: '600',
-    transition: 'all 0.3s ease',
-};
-
-const backdropStyle = {
-    position: 'fixed',
-    top: 0,
-    left: 0,
-    width: '100vw',
-    height: '100vh',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    zIndex: 1999,
-};
-
-const sidebarStyle = {
-    position: 'fixed',
-    top: 0,
-    left: 0,
-    width: '280px',
-    height: '100vh',
-    backgroundColor: '#0f172a',
-    color: 'white',
-    padding: '20px',
-    boxShadow: '4px 0 15px rgba(0, 0, 0, 0.3)',
-    zIndex: 2000,
-    transition: 'transform 0.3s ease-in-out',
-    borderRight: '1px solid rgba(255, 255, 255, 0.1)',
-};
-
-const closeBtnStyle = {
-    background: 'transparent',
-    border: 'none',
-    color: 'white',
-    fontSize: '24px',
-    cursor: 'pointer',
-    padding: '0',
-};
-
-const menuItemStyle = {
-    padding: '12px 20px',
-    textDecoration: 'none',
-    display: 'block',
-    fontSize: '14px',
-    cursor: 'pointer',
-    borderRadius: '6px',
-    transition: 'all 0.2s',
-    fontWeight: '500',
-};
 
 export default Header;

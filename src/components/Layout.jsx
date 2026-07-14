@@ -4,24 +4,9 @@ import Footer from './Footer';
 
 function Layout() {
     return (
-        <div
-            style={{
-                display: 'flex',
-                flexDirection: 'column',
-                minHeight: '100vh',
-                backgroundColor: '#0f172a',
-            }}
-        >
+        <div className="flex flex-col min-h-screen bg-slate-900 text-white">
             <Header />
-            <main
-                style={{
-                    flex: 1,
-                    padding: '30px 40px',
-                    backgroundColor: '#0f172a',
-                    color: '#ffffff',
-                    overflow: 'auto',
-                }}
-            >
+            <main className="flex-1 p-4 sm:p-6 md:p-10 overflow-auto bg-slate-900">
                 <Outlet />
             </main>
             <Footer />

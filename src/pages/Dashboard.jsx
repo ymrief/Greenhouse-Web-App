@@ -140,91 +140,40 @@ function Dashboard() {
     const averageColor = getMoistureColor(averageSoilMoisture);
 
     return (
-        <div>
+        <div className="space-y-6 md:space-y-8">
             {/* Salam Pembuka */}
-            <h1
-                style={{
-                    fontSize: '48px',
-                    fontWeight: '700',
-                    marginBottom: '40px',
-                    color: '#ffffff',
-                }}
-            >
+            <h1 className="text-3xl md:text-5xl font-extrabold text-white tracking-tight">
                 {isAdmin && adminUser ? `Selamat Datang, ${adminUser}!` : 'Selamat Datang!'}
             </h1>
 
             {/* Tata Letak Grid Utama */}
-            <div
-                style={{
-                    display: 'grid',
-                    gridTemplateColumns: '1fr 1fr',
-                    gap: '30px',
-                    marginBottom: '40px',
-                }}
-            >
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8">
                 {/* Sisi Kiri - Rerata dan Detil Kelembapan Tanah */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                <div className="flex flex-col gap-5">
                     {/* Kartu Kelembapan Tanah Besar */}
                     <div
-                        style={{
-                            padding: '30px',
-                            borderRadius: '12px',
-                            backgroundColor: '#1e293b',
-                            border: '1px solid rgba(255, 255, 255, 0.1)',
-                            borderLeft: `4px solid ${averageColor}`,
-                            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)',
-                            transition: 'all 0.3s ease',
-                        }}
+                        className="p-6 md:p-8 rounded-xl bg-slate-800 border border-slate-700/50 shadow-lg transition-all duration-300"
+                        style={{ borderLeft: `4px solid ${averageColor}` }}
                     >
-                        <h3
-                            style={{
-                                color: '#cbd5e1',
-                                fontSize: '16px',
-                                fontWeight: '500',
-                                marginTop: 0,
-                                marginBottom: '25px',
-                            }}
-                        >
+                        <h3 className="text-slate-300 text-sm md:text-base font-semibold mb-6">
                             Rerata Kelembapan Tanah
                         </h3>
-                        <div
-                            style={{
-                                display: 'flex',
-                                justifyContent: 'center',
-                                alignItems: 'center',
-                                marginBottom: '20px',
-                            }}
-                        >
+                        <div className="flex justify-center items-center mb-6">
                             <CircularProgress value={averageSoilMoisture} color={averageColor} />
                         </div>
-                        <div
-                            style={{
-                                width: '100%',
-                                height: '6px',
-                                backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                                borderRadius: '3px',
-                                overflow: 'hidden',
-                            }}
-                        >
+                        <div className="w-full h-1.5 bg-slate-700/50 rounded-full overflow-hidden">
                             <div
+                                className="h-full transition-all duration-500"
                                 style={{
                                     width: `${averageSoilMoisture}%`,
-                                    height: '100%',
                                     backgroundColor: averageColor,
-                                    transition: 'width 0.3s ease, background-color 0.3s ease',
                                 }}
                             ></div>
                         </div>
                     </div>
 
                     {/* Grid 6 Kartu Kelembapan Polybag */}
-                    <div
-                        style={{
-                            display: 'grid',
-                            gridTemplateColumns: 'repeat(3, 1fr)',
-                            gap: '15px',
-                        }}
-                    >
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 md:gap-4">
                         <PolybagCard num={1} value={soilMoisture1} />
                         <PolybagCard num={2} value={soilMoisture2} />
                         <PolybagCard num={3} value={soilMoisture3} />
@@ -235,110 +184,47 @@ function Dashboard() {
                 </div>
 
                 {/* Sisi Kanan - Tiga Kartu Pemantauan */}
-                <div
-                    style={{
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: '15px',
-                    }}
-                >
-                    <div
-                        style={{
-                            padding: '20px',
-                            borderRadius: '12px',
-                            backgroundColor: '#1e293b',
-                            border: '1px solid rgba(255, 255, 255, 0.1)',
-                            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)',
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            alignItems: 'center',
-                        }}
-                    >
+                <div className="flex flex-col gap-4">
+                    <div className="p-5 rounded-xl bg-slate-800 border border-slate-700/50 shadow-lg flex justify-between items-center hover:border-slate-600 transition-colors duration-200">
                         <div>
-                            <div style={{ color: '#cbd5e1', fontSize: '14px' }}>
+                            <div className="text-slate-300 text-xs sm:text-sm font-medium mb-1">
                                 Suhu Udara
                             </div>
-                            <div
-                                style={{
-                                    fontSize: '32px',
-                                    fontWeight: 'bold',
-                                    color: '#10b981',
-                                }}
-                            >
+                            <div className="text-2xl sm:text-3xl font-extrabold text-emerald-400">
                                 {displayAirTemperature}
                             </div>
                         </div>
-                        <span style={{ fontSize: '40px' }}>🌡️</span>
+                        <span className="text-3xl sm:text-4xl select-none">🌡️</span>
                     </div>
 
-                    <div
-                        style={{
-                            padding: '20px',
-                            borderRadius: '12px',
-                            backgroundColor: '#1e293b',
-                            border: '1px solid rgba(255, 255, 255, 0.1)',
-                            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)',
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            alignItems: 'center',
-                        }}
-                    >
+                    <div className="p-5 rounded-xl bg-slate-800 border border-slate-700/50 shadow-lg flex justify-between items-center hover:border-slate-600 transition-colors duration-200">
                         <div>
-                            <div style={{ color: '#cbd5e1', fontSize: '14px' }}>
+                            <div className="text-slate-300 text-xs sm:text-sm font-medium mb-1">
                                 Kelembapan Udara
                             </div>
-                            <div
-                                style={{
-                                    fontSize: '32px',
-                                    fontWeight: 'bold',
-                                    color: '#10b981',
-                                }}
-                            >
+                            <div className="text-2xl sm:text-3xl font-extrabold text-emerald-400">
                                 {displayAirHumidity}
                             </div>
                         </div>
-                        <span style={{ fontSize: '40px' }}>💧</span>
+                        <span className="text-3xl sm:text-4xl select-none">💧</span>
                     </div>
 
-                    <div
-                        style={{
-                            padding: '20px',
-                            borderRadius: '12px',
-                            backgroundColor: '#1e293b',
-                            border: '1px solid rgba(255, 255, 255, 0.1)',
-                            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)',
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            alignItems: 'center',
-                        }}
-                    >
+                    <div className="p-5 rounded-xl bg-slate-800 border border-slate-700/50 shadow-lg flex justify-between items-center hover:border-slate-600 transition-colors duration-200">
                         <div>
-                            <div style={{ color: '#cbd5e1', fontSize: '14px' }}>
+                            <div className="text-slate-300 text-xs sm:text-sm font-medium mb-1">
                                 Intensitas Cahaya
                             </div>
-                            <div
-                                style={{
-                                    fontSize: '32px',
-                                    fontWeight: 'bold',
-                                    color: '#10b981',
-                                }}
-                            >
+                            <div className="text-2xl sm:text-3xl font-extrabold text-emerald-400">
                                 {displayLightIntensity}
                             </div>
                         </div>
-                        <span style={{ fontSize: '40px' }}>☀️</span>
+                        <span className="text-3xl sm:text-4xl select-none">☀️</span>
                     </div>
                 </div>
             </div>
 
             {/* Kartu Status Bagian Bawah */}
-            <div
-                style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(3, 1fr)',
-                    gap: '20px',
-                }}
-            >
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-5">
                 <StatusCard
                     title="Posisi Slider"
                     value={getSliderPositionDisplay()}
@@ -360,54 +246,30 @@ function PolybagCard({ num, value }) {
     const color = getMoistureColor(value);
     return (
         <div
-            style={{
-                padding: '16px',
-                borderRadius: '12px',
-                backgroundColor: '#1e293b',
-                border: '1px solid rgba(255, 255, 255, 0.1)',
-                borderLeft: `4px solid ${color}`,
-                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)',
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'space-between',
-                transition: 'all 0.3s ease',
-            }}
+            className="p-4 rounded-xl bg-slate-800 border border-slate-700/50 shadow-md flex flex-col justify-between hover:border-slate-600 transition-all duration-300"
+            style={{ borderLeft: `4px solid ${color}` }}
         >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                <span style={{ color: '#cbd5e1', fontSize: '13px', fontWeight: '500' }}>
+            <div className="flex justify-between items-center mb-3">
+                <span className="text-slate-300 text-xs sm:text-sm font-semibold">
                     Polybag {num}
                 </span>
-                <span style={{ fontSize: '16px' }}>🌱</span>
+                <span className="text-sm select-none">🌱</span>
             </div>
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px' }}>
+            <div className="flex items-baseline gap-0.5">
                 <span
-                    style={{
-                        fontSize: '24px',
-                        fontWeight: 'bold',
-                        color: color,
-                        transition: 'color 0.3s ease',
-                    }}
+                    className="text-xl sm:text-2xl font-bold transition-colors duration-300"
+                    style={{ color: color }}
                 >
                     {value}
                 </span>
-                <span style={{ fontSize: '12px', color: '#94a3b8' }}>%</span>
+                <span className="text-xs text-slate-400 font-medium">%</span>
             </div>
-            <div
-                style={{
-                    width: '100%',
-                    height: '4px',
-                    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                    borderRadius: '2px',
-                    marginTop: '10px',
-                    overflow: 'hidden',
-                }}
-            >
+            <div className="w-full h-1 bg-slate-700/50 rounded-full mt-3.5 overflow-hidden">
                 <div
+                    className="h-full transition-all duration-500"
                     style={{
                         width: `${Math.min(Math.max(value, 0), 100)}%`,
-                        height: '100%',
                         backgroundColor: color,
-                        transition: 'width 0.3s ease, background-color 0.3s ease',
                     }}
                 />
             </div>
@@ -420,13 +282,13 @@ function CircularProgress({ value, color }) {
     const offset = circumference - (value / 100) * circumference;
 
     return (
-        <svg width="120" height="120">
+        <svg width="120" height="120" className="select-none">
             {/* Lingkaran Latar Belakang */}
             <circle
                 cx="60"
                 cy="60"
                 r="45"
-                stroke="rgba(255, 255, 255, 0.1)"
+                stroke="rgba(255, 255, 255, 0.05)"
                 strokeWidth="8"
                 fill="none"
             />
@@ -441,7 +303,7 @@ function CircularProgress({ value, color }) {
                 strokeDasharray={circumference}
                 strokeDashoffset={offset}
                 strokeLinecap="round"
-                style={{ transition: 'stroke-dashoffset 0.3s ease, stroke 0.3s ease' }}
+                style={{ transition: 'stroke-dashoffset 0.5s ease, stroke 0.5s ease' }}
             />
             {/* Teks Angka */}
             <text
@@ -449,10 +311,10 @@ function CircularProgress({ value, color }) {
                 y="70"
                 textAnchor="middle"
                 style={{
-                    fontSize: '32px',
+                    fontSize: '28px',
                     fontWeight: 'bold',
                     fill: color || '#10b981',
-                    transition: 'fill 0.3s ease',
+                    transition: 'fill 0.5s ease',
                 }}
             >
                 {value}%
@@ -463,32 +325,11 @@ function CircularProgress({ value, color }) {
 
 function StatusCard({ title, value }) {
     return (
-        <div
-            style={{
-                padding: '20px',
-                borderRadius: '12px',
-                backgroundColor: '#1e293b',
-                border: '1px solid rgba(255, 255, 255, 0.1)',
-                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)',
-                textAlign: 'center',
-            }}
-        >
-            <div
-                style={{
-                    color: '#cbd5e1',
-                    fontSize: '14px',
-                    marginBottom: '10px',
-                }}
-            >
+        <div className="p-5 rounded-xl bg-slate-800 border border-slate-700/50 shadow-md text-center hover:border-slate-600 transition-colors duration-200">
+            <div className="text-slate-400 text-xs sm:text-sm font-medium mb-2">
                 {title}
             </div>
-            <div
-                style={{
-                    fontSize: '24px',
-                    fontWeight: 'bold',
-                    color: '#ffffff',
-                }}
-            >
+            <div className="text-lg sm:text-2xl font-bold text-white">
                 {value}
             </div>
         </div>

@@ -38,16 +38,6 @@ function LoginPage() {
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const [currentSlide, setCurrentSlide] = useState(0);
-    const [isMobile, setIsMobile] = useState(window.innerWidth < 900);
-
-    // Responsive Window Resize Listener
-    useEffect(() => {
-        const handleResize = () => {
-            setIsMobile(window.innerWidth < 900);
-        };
-        window.addEventListener('resize', handleResize);
-        return () => window.removeEventListener('resize', handleResize);
-    }, []);
 
     // Carousel Timer
     useEffect(() => {
@@ -83,246 +73,96 @@ function LoginPage() {
     };
 
     return (
-        <div
-            style={{
-                minHeight: '100vh',
-                display: 'flex',
-                backgroundColor: '#0f172a',
-                color: '#ffffff',
-                fontFamily: "'Inter', sans-serif",
-                overflow: 'hidden',
-            }}
-        >
-            {/* Left Side: Carousel (hidden on mobile) */}
-            {!isMobile && (
-                <div
-                    style={{
-                        flex: 1.2,
-                        position: 'relative',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        justifyContent: 'center',
-                        alignItems: 'center',
-                        backgroundColor: '#111827',
-                        borderRight: '1px solid rgba(255, 255, 255, 0.05)',
-                    }}
-                >
-                    {/* Carousel Slides Container */}
-                    <div style={{ position: 'relative', width: '100%', height: '100%' }}>
-                        {carouselSlides.map((slide, index) => {
-                            const isActive = index === currentSlide;
-                            return (
-                                <div
-                                    key={index}
-                                    style={{
-                                        position: 'absolute',
-                                        top: 0,
-                                        left: 0,
-                                        right: 0,
-                                        bottom: 0,
-                                        display: 'flex',
-                                        flexDirection: 'column',
-                                        justifyContent: 'center',
-                                        alignItems: 'center',
-                                        padding: '60px',
-                                        textAlign: 'center',
-                                        opacity: isActive ? 1 : 0,
-                                        visibility: isActive ? 'visible' : 'hidden',
-                                        transition: 'opacity 0.8s ease, visibility 0.8s ease',
-                                        background: slide.bgGradient,
-                                    }}
-                                >
-                                    <div
-                                        style={{
-                                            fontSize: '90px',
-                                            marginBottom: '30px',
-                                            transform: isActive ? 'translateY(0)' : 'translateY(15px)',
-                                            transition: 'transform 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
-                                            userSelect: 'none',
-                                        }}
-                                    >
-                                        {slide.icon}
-                                    </div>
-                                    <h2
-                                        style={{
-                                            fontSize: '32px',
-                                            fontWeight: '800',
-                                            color: '#ffffff',
-                                            marginBottom: '20px',
-                                            letterSpacing: '-0.5px',
-                                        }}
-                                    >
-                                        {slide.title}
-                                    </h2>
-                                    <p
-                                        style={{
-                                            fontSize: '16px',
-                                            color: '#94a3b8',
-                                            lineHeight: '1.8',
-                                            maxWidth: '520px',
-                                            margin: '0 auto',
-                                        }}
-                                    >
-                                        {slide.description}
-                                    </p>
-                                </div>
-                            );
-                        })}
-                    </div>
-
-                    {/* Dots Pagination */}
-                    <div
-                        style={{
-                            position: 'absolute',
-                            bottom: '50px',
-                            display: 'flex',
-                            gap: '12px',
-                            zIndex: 10,
-                        }}
-                    >
-                        {carouselSlides.map((_, index) => (
-                            <button
+        <div className="min-h-screen flex bg-slate-900 text-white font-sans overflow-hidden">
+            {/* Left Side: Carousel (hidden on mobile/tablet) */}
+            <div className="hidden lg:flex lg:flex-[1.2] relative flex-col justify-center items-center bg-slate-950 border-r border-slate-800/40">
+                {/* Carousel Slides Container */}
+                <div className="relative w-full h-full">
+                    {carouselSlides.map((slide, index) => {
+                        const isActive = index === currentSlide;
+                        return (
+                            <div
                                 key={index}
-                                onClick={() => setCurrentSlide(index)}
-                                style={{
-                                    width: index === currentSlide ? '28px' : '10px',
-                                    height: '10px',
-                                    borderRadius: '5px',
-                                    border: 'none',
-                                    backgroundColor: index === currentSlide ? '#10b981' : 'rgba(255, 255, 255, 0.2)',
-                                    cursor: 'pointer',
-                                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                                }}
-                                aria-label={`Go to slide ${index + 1}`}
-                            />
-                        ))}
-                    </div>
+                                className={`absolute inset-0 flex flex-col justify-center items-center p-16 text-center transition-all duration-1000 ${
+                                    isActive ? 'opacity-100 visible' : 'opacity-0 invisible'
+                                }`}
+                                style={{ background: slide.bgGradient }}
+                            >
+                                <div
+                                    className={`text-[90px] mb-8 select-none transition-transform duration-1000 ${
+                                        isActive ? 'translate-y-0' : 'translate-y-4'
+                                    }`}
+                                >
+                                    {slide.icon}
+                                </div>
+                                <h2 className="text-3xl font-extrabold text-white mb-5 tracking-tight">
+                                    {slide.title}
+                                </h2>
+                                <p className="text-base text-slate-400 leading-relaxed max-w-lg mx-auto">
+                                    {slide.description}
+                                </p>
+                            </div>
+                        );
+                    })}
                 </div>
-            )}
+
+                {/* Dots Pagination */}
+                <div className="absolute bottom-12 flex gap-3 z-10">
+                    {carouselSlides.map((_, index) => (
+                        <button
+                            key={index}
+                            onClick={() => setCurrentSlide(index)}
+                            className={`h-2.5 rounded-full border-none cursor-pointer transition-all duration-300 ${
+                                index === currentSlide ? 'w-7 bg-emerald-500' : 'w-2.5 bg-white/20'
+                            }`}
+                            aria-label={`Go to slide ${index + 1}`}
+                        />
+                    ))}
+                </div>
+            </div>
 
             {/* Right Side: Login Form */}
-            <div
-                style={{
-                    flex: 1,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    padding: '40px',
-                    background: isMobile ? 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)' : '#0f172a',
-                    position: 'relative',
-                }}
-            >
+            <div className="flex-1 flex items-center justify-center p-6 sm:p-10 bg-slate-900 lg:bg-transparent relative">
                 {/* Background decorative elements */}
-                <div style={{
-                    position: 'absolute',
-                    bottom: '-20%',
-                    left: '-20%',
-                    width: '350px',
-                    height: '350px',
-                    background: 'rgba(16, 185, 129, 0.05)',
-                    filter: 'blur(100px)',
-                    borderRadius: '50%',
-                    pointerEvents: 'none'
-                }}></div>
+                <div className="absolute -bottom-1/4 -left-1/4 w-80 h-80 bg-emerald-500/5 filter blur-3xl rounded-full pointer-events-none"></div>
 
                 {/* Login Card */}
-                <div
-                    style={{
-                        width: '100%',
-                        maxWidth: '420px',
-                        padding: '45px 35px',
-                        borderRadius: '16px',
-                        border: '1px solid rgba(255, 255, 255, 0.08)',
-                        backgroundColor: 'rgba(30, 41, 59, 0.65)',
-                        boxShadow: '0 20px 50px rgba(0, 0, 0, 0.4)',
-                        backdropFilter: 'blur(12px)',
-                        zIndex: 2,
-                    }}
-                >
+                <div className="w-full max-w-md p-8 sm:p-10 rounded-2xl border border-slate-700/40 bg-slate-800/60 shadow-2xl backdrop-blur-md z-10">
                     {/* Logo Section */}
-                    <div
-                        style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            gap: '12px',
-                            marginBottom: '35px',
-                        }}
-                    >
-                        <div
-                            style={{
-                                width: '46px',
-                                height: '46px',
-                                background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-                                borderRadius: '12px',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                fontSize: '24px',
-                                boxShadow: '0 4px 10px rgba(16, 185, 129, 0.2)',
-                            }}
-                        >
+                    <div className="flex items-center justify-center gap-3 mb-8">
+                        <div className="w-11 h-11 bg-gradient-to-br from-emerald-400 to-green-600 rounded-xl flex items-center justify-center text-xl shadow-lg shadow-emerald-500/20">
                             🌿
                         </div>
-                        <div>
-                            <div
-                                style={{
-                                    fontSize: '18px',
-                                    fontWeight: '700',
-                                    color: '#ffffff',
-                                    lineHeight: '1.2',
-                                }}
-                            >
+                        <div className="text-left">
+                            <div className="text-base font-bold text-white leading-tight tracking-wide">
                                 Smart Greenhouse
                             </div>
-                            <div style={{ fontSize: '12px', color: '#94a3b8', marginTop: '2px' }}>
+                            <div className="text-xs text-slate-400 font-medium mt-0.5">
                                 FIK UPNVJ
                             </div>
                         </div>
                     </div>
 
                     {/* Title */}
-                    <h1
-                        style={{
-                            textAlign: 'center',
-                            fontSize: '24px',
-                            fontWeight: '800',
-                            marginBottom: '8px',
-                            color: '#ffffff',
-                        }}
-                    >
+                    <h1 className="text-center text-xl sm:text-2xl font-extrabold mb-1.5 text-white">
                         Login Operator
                     </h1>
-                    <p style={{ textAlign: 'center', fontSize: '14px', color: '#94a3b8', marginBottom: '28px' }}>
+                    <p className="text-center text-xs sm:text-sm text-slate-400 mb-8">
                         Masukkan akun untuk mengelola rumah kaca
                     </p>
 
                     {/* Error Message */}
                     {error && (
-                        <div
-                            style={{
-                                padding: '12px',
-                                marginBottom: '20px',
-                                borderRadius: '8px',
-                                backgroundColor: 'rgba(239, 68, 68, 0.1)',
-                                border: '1px solid rgba(239, 68, 68, 0.2)',
-                                color: '#ef4444',
-                                fontSize: '13px',
-                                fontWeight: '500',
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '8px',
-                            }}
-                        >
+                        <div className="p-3.5 mb-6 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-xs sm:text-sm font-semibold flex items-center gap-2.5">
                             ⚠️ <span>{error}</span>
                         </div>
                     )}
 
                     {/* Form */}
-                    <form onSubmit={handleLogin}>
+                    <form onSubmit={handleLogin} className="space-y-5">
                         {/* Username Input */}
-                        <div style={{ marginBottom: '20px' }}>
-                            <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#94a3b8', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                        <div>
+                            <label className="block text-[10px] sm:text-xs font-bold text-slate-400 mb-2 uppercase tracking-wider">
                                 Username
                             </label>
                             <input
@@ -330,32 +170,13 @@ function LoginPage() {
                                 placeholder="Masukkan username"
                                 value={username}
                                 onChange={(e) => setUsername(e.target.value)}
-                                style={{
-                                    width: '100%',
-                                    padding: '12px 16px',
-                                    borderRadius: '8px',
-                                    border: '1px solid rgba(255, 255, 255, 0.1)',
-                                    backgroundColor: 'rgba(15, 23, 42, 0.5)',
-                                    color: '#ffffff',
-                                    fontSize: '14px',
-                                    outline: 'none',
-                                    boxSizing: 'border-box',
-                                    transition: 'all 0.3s ease',
-                                }}
-                                onFocus={(e) => {
-                                    e.target.style.borderColor = '#10b981';
-                                    e.target.style.boxShadow = '0 0 0 3px rgba(16, 185, 129, 0.15)';
-                                }}
-                                onBlur={(e) => {
-                                    e.target.style.borderColor = 'rgba(255, 255, 255, 0.1)';
-                                    e.target.style.boxShadow = 'none';
-                                }}
+                                className="w-full px-4 py-3 rounded-lg border border-slate-700/60 bg-slate-900/60 text-white text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/15 transition-all duration-300"
                             />
                         </div>
 
                         {/* Password Input */}
-                        <div style={{ marginBottom: '30px' }}>
-                            <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#94a3b8', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                        <div>
+                            <label className="block text-[10px] sm:text-xs font-bold text-slate-400 mb-2 uppercase tracking-wider">
                                 Password
                             </label>
                             <input
@@ -363,53 +184,14 @@ function LoginPage() {
                                 placeholder="Masukkan password"
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
-                                style={{
-                                    width: '100%',
-                                    padding: '12px 16px',
-                                    borderRadius: '8px',
-                                    border: '1px solid rgba(255, 255, 255, 0.1)',
-                                    backgroundColor: 'rgba(15, 23, 42, 0.5)',
-                                    color: '#ffffff',
-                                    fontSize: '14px',
-                                    outline: 'none',
-                                    boxSizing: 'border-box',
-                                    transition: 'all 0.3s ease',
-                                }}
-                                onFocus={(e) => {
-                                    e.target.style.borderColor = '#10b981';
-                                    e.target.style.boxShadow = '0 0 0 3px rgba(16, 185, 129, 0.15)';
-                                }}
-                                onBlur={(e) => {
-                                    e.target.style.borderColor = 'rgba(255, 255, 255, 0.1)';
-                                    e.target.style.boxShadow = 'none';
-                                }}
+                                className="w-full px-4 py-3 rounded-lg border border-slate-700/60 bg-slate-900/60 text-white text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/15 transition-all duration-300"
                             />
                         </div>
 
                         {/* Login Button */}
                         <button
                             type="submit"
-                            style={{
-                                width: '100%',
-                                padding: '14px',
-                                borderRadius: '8px',
-                                border: 'none',
-                                background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-                                color: 'white',
-                                fontSize: '15px',
-                                fontWeight: '600',
-                                cursor: 'pointer',
-                                transition: 'all 0.3s ease',
-                                boxShadow: '0 4px 12px rgba(16, 185, 129, 0.15)',
-                            }}
-                            onMouseEnter={(e) => {
-                                e.target.style.transform = 'translateY(-1px)';
-                                e.target.style.boxShadow = '0 6px 20px rgba(16, 185, 129, 0.3)';
-                            }}
-                            onMouseLeave={(e) => {
-                                e.target.style.transform = 'translateY(0)';
-                                e.target.style.boxShadow = '0 4px 12px rgba(16, 185, 129, 0.15)';
-                            }}
+                            className="w-full py-3.5 rounded-lg border-none bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white text-sm font-bold cursor-pointer shadow-lg shadow-emerald-500/10 hover:shadow-emerald-500/20 hover:-translate-y-0.5 transition-all duration-300 mt-2"
                         >
                             Masuk Ke Dashboard
                         </button>

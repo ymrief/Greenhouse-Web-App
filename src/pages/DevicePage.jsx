@@ -206,7 +206,7 @@ function DevicePage() {
 
     // --- RENDER TAMPILAN (UI) ---
     return (
-        <div>
+        <div className="space-y-6 md:space-y-8">
             {/* Gaya Transisi Pulse Loader */}
             <style>{`
                 @keyframes pulse {
@@ -217,62 +217,23 @@ function DevicePage() {
             `}</style>
 
             {/* Title */}
-            <h1
-                style={{
-                    fontSize: '48px',
-                    fontWeight: '700',
-                    marginBottom: '40px',
-                    color: '#ffffff',
-                }}
-            >
+            <h1 className="text-3xl md:text-5xl font-extrabold text-white tracking-tight">
                 Device Control
             </h1>
 
             {error && (
-                <div
-                    style={{
-                        color: '#ef4444',
-                        marginBottom: '20px',
-                        padding: '15px',
-                        backgroundColor: 'rgba(239, 68, 68, 0.1)',
-                        borderRadius: '8px',
-                        border: '1px solid rgba(239, 68, 68, 0.3)',
-                    }}
-                >
-                    {error}
+                <div className="text-red-400 p-4 bg-red-500/10 border border-red-500/25 rounded-lg text-sm font-medium">
+                    ⚠️ {error}
                 </div>
             )}
 
             {/* Solenoid Valve Control */}
-            <div
-                style={{
-                    padding: '30px',
-                    borderRadius: '12px',
-                    backgroundColor: '#1e293b',
-                    border: '1px solid rgba(255, 255, 255, 0.1)',
-                    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)',
-                    marginBottom: '30px',
-                }}
-            >
-                <h3
-                    style={{
-                        marginTop: 0,
-                        marginBottom: '25px',
-                        color: '#cbd5e1',
-                        fontSize: '16px',
-                        fontWeight: '600',
-                    }}
-                >
+            <div className="p-6 md:p-8 rounded-xl bg-slate-800 border border-slate-700/50 shadow-lg">
+                <h3 className="mt-0 mb-6 text-slate-300 text-sm md:text-base font-semibold">
                     Kontrol Solenoid Valve
                 </h3>
 
-                <div
-                    style={{
-                        display: 'grid',
-                        gridTemplateColumns: 'repeat(6, 1fr)',
-                        gap: '20px',
-                    }}
-                >
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-5">
                     {Object.entries(valves).map(([valve, isOn], idx) => {
                         const isDisabled = idx > 1; // Hanya valve 1 dan 2 yang aktif
                         const devKey = `solenoid_${idx + 1}`;
@@ -281,16 +242,14 @@ function DevicePage() {
                         return (
                             <div
                                 key={valve}
+                                className="flex flex-col items-center"
                                 style={{
-                                    display: 'flex',
-                                    flexDirection: 'column',
-                                    alignItems: 'center',
-                                    opacity: (isDisabled || isFuzzyOn) ? 0.5 : 1,
+                                    opacity: (isDisabled || isFuzzyOn) ? 0.4 : 1,
                                     pointerEvents: (isDisabled || isFuzzyOn) ? 'none' : 'auto',
                                 }}
                             >
                                 <label 
-                                    className="toggle-switch" 
+                                    className="toggle-switch cursor-pointer" 
                                     style={getToggleStyle(devKey)}
                                 >
                                     <input
@@ -301,14 +260,7 @@ function DevicePage() {
                                     />
                                     <span className="toggle-slider"></span>
                                 </label>
-                                <div
-                                    style={{
-                                        marginTop: '12px',
-                                        color: '#cbd5e1',
-                                        fontSize: '14px',
-                                        fontWeight: '500',
-                                    }}
-                                >
+                                <div className="mt-3 text-slate-300 text-xs sm:text-sm font-semibold select-none">
                                     Valve {idx + 1}
                                 </div>
                             </div>
@@ -318,74 +270,26 @@ function DevicePage() {
             </div>
 
             {/* Slider Position Control */}
-            <div
-                style={{
-                    padding: '30px',
-                    borderRadius: '12px',
-                    backgroundColor: '#1e293b',
-                    border: '1px solid rgba(255, 255, 255, 0.1)',
-                    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)',
-                    marginBottom: '30px',
-                }}
-            >
-                <h3
-                    style={{
-                        marginTop: 0,
-                        marginBottom: '25px',
-                        color: '#cbd5e1',
-                        fontSize: '16px',
-                        fontWeight: '600',
-                    }}
-                >
+            <div className="p-6 md:p-8 rounded-xl bg-slate-800 border border-slate-700/50 shadow-lg">
+                <h3 className="mt-0 mb-6 text-slate-300 text-sm md:text-base font-semibold">
                     Kontrol Posisi Slider
                 </h3>
 
-                <div style={{ position: 'relative', padding: '20px 0' }}>
-                    <div
-                        style={{
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            alignItems: 'center',
-                            position: 'relative',
-                            zIndex: 1,
-                        }}
-                    >
+                <div className="overflow-x-auto pb-4 pt-2 -mx-2 px-2 scrollbar-thin select-none">
+                    <div className="flex justify-between items-center relative z-10 min-w-[640px] px-2">
                         {/* Home button */}
                         <button
                             onClick={() => handleSliderChange('home')}
                             disabled={isLoading || loadingStates.slider || isFuzzyOn}
+                            className={`w-10 h-10 rounded-full border-2 border-slate-600 font-bold text-xs flex items-center justify-center transition-all duration-300 cursor-pointer ${
+                                sliderPos === 'home'
+                                    ? 'bg-emerald-500 text-white border-emerald-400 shadow-lg shadow-emerald-500/30'
+                                    : 'bg-slate-700/40 text-slate-300 hover:bg-slate-700 hover:text-white'
+                            }`}
                             style={{
-                                width: '40px',
-                                height: '40px',
-                                borderRadius: '50%',
-                                border: '3px solid white',
-                                backgroundColor:
-                                    sliderPos === 'home'
-                                        ? '#10b981'
-                                        : 'rgba(100, 116, 139, 0.3)',
-                                color: '#ffffff',
-                                cursor: (isLoading || loadingStates.slider || isFuzzyOn) ? 'not-allowed' : 'pointer',
-                                fontSize: '10px',
-                                fontWeight: '600',
-                                transition: 'all 0.3s ease',
-                                boxShadow:
-                                    sliderPos === 'home'
-                                        ? '0 4px 12px rgba(16, 185, 129, 0.4)'
-                                        : 'none',
                                 opacity: (isLoading || loadingStates.slider || isFuzzyOn) ? 0.4 : 1,
+                                cursor: (isLoading || loadingStates.slider || isFuzzyOn) ? 'not-allowed' : 'pointer',
                                 ...(loadingStates.slider ? { animation: 'pulse 1.5s infinite ease-in-out' } : {}),
-                            }}
-                            onMouseEnter={(e) => {
-                                if (!isLoading && !loadingStates.slider && !isFuzzyOn && sliderPos !== 'home') {
-                                    e.target.style.backgroundColor = 'rgba(16, 185, 129, 0.3)';
-                                    e.target.style.boxShadow = '0 2px 8px rgba(16, 185, 129, 0.2)';
-                                }
-                            }}
-                            onMouseLeave={(e) => {
-                                if (sliderPos !== 'home') {
-                                    e.target.style.backgroundColor = 'rgba(100, 116, 139, 0.3)';
-                                    e.target.style.boxShadow = 'none';
-                                }
                             }}
                         >
                             H
@@ -403,46 +307,20 @@ function DevicePage() {
                                     key={position}
                                     onClick={() => handleSliderChange(positionStr)}
                                     disabled={isLoading || isDisabled || loadingStates.slider || isFuzzyOn}
-                                    style={{
-                                        width: '32px',
-                                        height: '32px',
-                                        borderRadius: '50%',
-                                        border: '3px solid white',
-                                        backgroundColor: isActive
-                                            ? '#10b981'
+                                    className={`w-8 h-8 rounded-full border-2 font-bold text-xs flex items-center justify-center transition-all duration-300 ${
+                                        isActive
+                                            ? 'bg-emerald-500 text-white border-emerald-400 shadow-lg shadow-emerald-500/30'
                                             : isDisabled
-                                              ? 'rgba(100, 116, 139, 0.15)'
-                                              : 'rgba(100, 116, 139, 0.3)',
-                                        color: '#ffffff',
-                                        cursor: isDisabled
-                                            ? 'not-allowed'
-                                            : (isLoading || loadingStates.slider || isFuzzyOn)
-                                              ? 'not-allowed'
-                                              : 'pointer',
-                                        fontSize: '12px',
-                                        fontWeight: '600',
-                                        transition: 'all 0.3s ease',
-                                        boxShadow: isActive
-                                            ? '0 4px 12px rgba(16, 185, 129, 0.4)'
-                                            : 'none',
+                                              ? 'bg-slate-800/20 text-slate-600 border-slate-800/40 cursor-not-allowed'
+                                              : 'bg-slate-700/40 text-slate-300 border-slate-600 hover:bg-slate-700 hover:text-white cursor-pointer'
+                                    }`}
+                                    style={{
                                         opacity: isDisabled
                                             ? 0.3
                                             : (isLoading || loadingStates.slider || isFuzzyOn)
                                               ? 0.4
                                               : 1,
                                         ...(loadingStates.slider && !isDisabled ? { animation: 'pulse 1.5s infinite ease-in-out' } : {}),
-                                    }}
-                                    onMouseEnter={(e) => {
-                                        if (!isLoading && !loadingStates.slider && !isDisabled && !isActive && !isFuzzyOn) {
-                                            e.target.style.backgroundColor = 'rgba(16, 185, 129, 0.3)';
-                                            e.target.style.boxShadow = '0 2px 8px rgba(16, 185, 129, 0.2)';
-                                        }
-                                    }}
-                                    onMouseLeave={(e) => {
-                                        if (!isActive && !isDisabled) {
-                                            e.target.style.backgroundColor = 'rgba(100, 116, 139, 0.3)';
-                                            e.target.style.boxShadow = 'none';
-                                        }
                                     }}
                                 >
                                     {position}
@@ -454,85 +332,53 @@ function DevicePage() {
             </div>
 
             {/* Bottom Control Cards */}
-            <div
-                style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(2, 1fr)',
-                    gap: '20px',
-                }}
-            >
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 {/* Pump Control */}
                 <div
+                    className="p-6 md:p-8 rounded-xl bg-slate-800 border border-slate-700/50 shadow-lg text-center hover:border-slate-600 transition-colors duration-200"
                     style={{
-                        padding: '30px',
-                        borderRadius: '12px',
-                        backgroundColor: '#1e293b',
-                        border: '1px solid rgba(255, 255, 255, 0.1)',
-                        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)',
-                        textAlign: 'center',
-                        opacity: isFuzzyOn ? 0.5 : 1,
+                        opacity: isFuzzyOn ? 0.4 : 1,
                         pointerEvents: isFuzzyOn ? 'none' : 'auto',
                     }}
                 >
-                    <h4
-                        style={{
-                            marginTop: 0,
-                            marginBottom: '20px',
-                            color: '#cbd5e1',
-                            fontSize: '16px',
-                            fontWeight: '600',
-                        }}
-                    >
+                    <h4 className="mt-0 mb-6 text-slate-300 text-sm md:text-base font-semibold">
                         Kontrol Pompa
                     </h4>
-                    <label
-                        className="toggle-switch"
-                        style={{ justifyContent: 'center', ...getToggleStyle('pompa') }}
-                    >
-                        <input
-                            type="checkbox"
-                            checked={isPumpOn}
-                            onChange={handlePumpToggle}
-                            disabled={isLoading || loadingStates.pompa || isFuzzyOn}
-                        />
-                        <span className="toggle-slider"></span>
-                    </label>
+                    <div className="flex justify-center">
+                        <label
+                            className="toggle-switch cursor-pointer"
+                            style={getToggleStyle('pompa')}
+                        >
+                            <input
+                                type="checkbox"
+                                checked={isPumpOn}
+                                onChange={handlePumpToggle}
+                                disabled={isLoading || loadingStates.pompa || isFuzzyOn}
+                            />
+                            <span className="toggle-slider"></span>
+                        </label>
+                    </div>
                 </div>
 
                 {/* Fuzzy Automation */}
-                <div
-                    style={{
-                        padding: '30px',
-                        borderRadius: '12px',
-                        backgroundColor: '#1e293b',
-                        border: '1px solid rgba(255, 255, 255, 0.1)',
-                        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)',
-                        textAlign: 'center',
-                    }}
-                >
-                    <h4
-                        style={{
-                            marginTop: 0,
-                            marginBottom: '20px',
-                            color: '#cbd5e1',
-                            fontSize: '16px',
-                            fontWeight: '600',
-                        }}
-                    >
+                <div className="p-6 md:p-8 rounded-xl bg-slate-800 border border-slate-700/50 shadow-lg text-center hover:border-slate-600 transition-colors duration-200">
+                    <h4 className="mt-0 mb-6 text-slate-300 text-sm md:text-base font-semibold">
                         Automatisasi Fuzzy
                     </h4>
-                    <label
-                        className="toggle-switch"
-                        style={{ justifyContent: 'center', ...getToggleStyle('auto_mode') }}
-                    >
-                        <input
-                            type="checkbox"
-                            checked={isFuzzyOn}
-                            onChange={handleFuzzyToggle}
-                            disabled={isLoading || loadingStates.auto_mode}
-                        />
-                        <span className="toggle-slider"></span>
-                    </label>
+                    <div className="flex justify-center">
+                        <label
+                            className="toggle-switch cursor-pointer"
+                            style={getToggleStyle('auto_mode')}
+                        >
+                            <input
+                                type="checkbox"
+                                checked={isFuzzyOn}
+                                onChange={handleFuzzyToggle}
+                                disabled={isLoading || loadingStates.auto_mode}
+                            />
+                            <span className="toggle-slider"></span>
+                        </label>
+                    </div>
                 </div>
             </div>
         </div>

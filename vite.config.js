@@ -2,8 +2,9 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 
-// Konfigurasi target Backend
-const BACKEND_HOST = '192.168.31.34:8000';
+// Konfigurasi target Backend (Hanya digunakan saat development lokal via 'npm run dev')
+// GANTILAH alamat IP/Port ini jika target backend development lokal Anda berubah:
+const BACKEND_HOST = '103.147.92.179:8002';
 const BACKEND_HTTP = `http://${BACKEND_HOST}`;
 const BACKEND_WS = `ws://${BACKEND_HOST}`;
 
@@ -49,6 +50,7 @@ const proxyConfig = {
 // https://vite.dev/config/
 export default defineConfig({
     plugins: [react(), tailwindcss()],
+    base: '/greenhouse/website/',
     server: {
         proxy: proxyConfig,
     },

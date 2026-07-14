@@ -10,7 +10,7 @@ import NotFound from './pages/NotFound';
 
 function App() {
     return (
-        <BrowserRouter>
+        <BrowserRouter basename="/greenhouse/website/">
             <Routes>
                 <Route path="/login" element={<LoginPage />} />
 

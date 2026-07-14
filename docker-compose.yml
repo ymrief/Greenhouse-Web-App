@@ -1,0 +1,16 @@
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: greenhouse-frontend
+    ports:
+      - "8081:80"
+    networks:
+      - greenhouse_default
+    restart: unless-stopped
+
+networks:
+  greenhouse_default:
+    name: greenhouse-server-backend_default
+    external: true
