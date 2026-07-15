@@ -16,6 +16,67 @@ function Dashboard() {
     const [sliderPos, setSliderPos] = useState('home');
     const [_isMotorMoving, setIsMotorMoving] = useState(false);
 
+    // State untuk data sensor agar selalu ter-update secara real-time dari WebSocket
+    const [soilMoistures, setSoilMoistures] = useState({
+        soil_1: 0, soil_2: 0, soil_3: 0, soil_4: 0, soil_5: 0, soil_6: 0
+    });
+    const [airTemp, setAirTemp] = useState(null);
+    const [airHumidity, setAirHumidity] = useState(null);
+    const [lightIntensity, setLightIntensity] = useState(null);
+    const [waterUsage, setWaterUsage] = useState(null);
+
+    // Sinkronisasi data real-time ketika historyData ter-update via WebSocket
+    useEffect(() => {
+        if (historyData && historyData.length > 0) {
+            const latest = historyData[0]?.data;
+            if (latest) {
+                // Update kelembapan tanah jika ada
+                setSoilMoistures(prev => {
+                    const next = { ...prev };
+                    let updated = false;
+                    for (let i = 1; i <= 6; i++) {
+                        const key = `soil_${i}`;
+                        if (latest[key] !== undefined) {
+                            next[key] = latest[key];
+                            updated = true;
+                        }
+                    }
+                    return updated ? next : prev;
+                });
+
+                // Update suhu udara jika ada
+                const tempVal = latest.temp_1 !== undefined ? latest.temp_1 : latest.temperature;
+                if (tempVal !== undefined) {
+                    setAirTemp(tempVal);
+                }
+
+                // Update kelembapan udara jika ada
+                const humVal = latest.humidity_1 !== undefined ? latest.humidity_1 : latest.humidity;
+                if (humVal !== undefined) {
+                    setAirHumidity(humVal);
+                }
+
+                // Update intensitas cahaya jika ada
+                const lightVal = latest.light_1 !== undefined 
+                    ? latest.light_1 
+                    : latest.bh_1 !== undefined 
+                        ? latest.bh_1 
+                        : latest.light_intensity;
+                if (lightVal !== undefined) {
+                    setLightIntensity(lightVal);
+                }
+
+                // Update penggunaan air jika ada
+                const waterVal = latest.daily_water_usage !== undefined 
+                    ? latest.daily_water_usage 
+                    : latest.water_usage;
+                if (waterVal !== undefined) {
+                    setWaterUsage(waterVal);
+                }
+            }
+        }
+    }, [historyData]);
+
     // Memuat status kontrol awal saat komponen dipasang (mount)
     useEffect(() => {
         let isMounted = true;
@@ -104,36 +165,23 @@ function Dashboard() {
 
     // 1. EKSTRAKSI AMAN (Menggunakan Optional Chaining ?. agar tidak crash jika array kosong)
     const latestRecord = historyData?.[0];
-    const latestData = latestRecord?.data; // Mengambil objek 'data' jika record ada
     const _latestTime = latestRecord?.timestamp
         ? new Date(latestRecord.timestamp).toLocaleString('id-ID')
         : '--';
 
     // 2. FORMALISASI FORMAT TEKS (Gunakan '--' jika data tidak tersedia)
-    const displayAirTemperature =
-        latestData?.temp_1 !== undefined ? `${latestData.temp_1}°C` : '--';
-    const displayAirHumidity =
-        latestData?.humidity_1 !== undefined
-            ? `RH ${latestData.humidity_1}%`
-            : '--';
-    const displayLightIntensity =
-        latestData?.light_1 !== undefined ? `${latestData.light_1} Lux` : '--';
-
-    // Mengambil data penggunaan air dari database backend (kolom daily_water_usage atau water_usage)
-    const displayWaterUsage =
-        latestData?.daily_water_usage !== undefined
-            ? `${latestData.daily_water_usage} L`
-            : latestData?.water_usage !== undefined
-              ? `${latestData.water_usage} L`
-              : '--';
+    const displayAirTemperature = airTemp !== null ? `${airTemp}°C` : '--';
+    const displayAirHumidity = airHumidity !== null ? `RH ${airHumidity}%` : '--';
+    const displayLightIntensity = lightIntensity !== null ? `${lightIntensity} Lux` : '--';
+    const displayWaterUsage = waterUsage !== null ? `${waterUsage} L` : '--';
 
     // 3. LOGIKA VISUAL PROGRESS (Wajib angka 0-100 agar komponen SVG tidak rusak)
-    const soilMoisture1 = latestData?.soil_1 ?? 0;
-    const soilMoisture2 = latestData?.soil_2 ?? 0;
-    const soilMoisture3 = latestData?.soil_3 ?? 0;
-    const soilMoisture4 = latestData?.soil_4 ?? 0;
-    const soilMoisture5 = latestData?.soil_5 ?? 0;
-    const soilMoisture6 = latestData?.soil_6 ?? 0;
+    const soilMoisture1 = soilMoistures.soil_1;
+    const soilMoisture2 = soilMoistures.soil_2;
+    const soilMoisture3 = soilMoistures.soil_3;
+    const soilMoisture4 = soilMoistures.soil_4;
+    const soilMoisture5 = soilMoistures.soil_5;
+    const soilMoisture6 = soilMoistures.soil_6;
     const averageSoilMoisture = latestRecord
         ? Math.round((soilMoisture1 + soilMoisture2 + soilMoisture3 + soilMoisture4 + soilMoisture5 + soilMoisture6) / 6)
         : 0;
