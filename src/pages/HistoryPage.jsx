@@ -92,7 +92,10 @@ function HistoryPage() {
                 ? log.device_target.toLowerCase()
                 : '';
             const rawStatus = log.status ? log.status.toLowerCase() : '';
-
+            const detailStr = log.payload_sent?.message
+                ? log.payload_sent.message.toLowerCase()
+                : '';
+ 
             matchSearch =
                 timeStr.includes(query) ||
                 modeStr.includes(query) ||
@@ -101,7 +104,8 @@ function HistoryPage() {
                 statusStr.includes(query) ||
                 rawAction.includes(query) ||
                 rawTarget.includes(query) ||
-                rawStatus.includes(query);
+                rawStatus.includes(query) ||
+                detailStr.includes(query);
         }
 
         // 2. Filter berdasarkan Mode (Otomatis/Manual)
@@ -139,6 +143,7 @@ function HistoryPage() {
         if (actionLower === 'valve_on') return 'Buka Valve';
         if (actionLower === 'valve_off') return 'Tutup Valve';
         if (actionLower === 'move_to') return 'Geser Slider';
+        if (actionLower === 'watering_summary') return 'Ringkasan Penyiraman';
         return action;
     };
 
@@ -163,6 +168,7 @@ function HistoryPage() {
         if (targetStr === 'SWITCH_3' || targetStr === '3') return 'Posisi 3';
         if (targetStr === 'VALVE_1') return 'Solenoid Valve 1';
         if (targetStr === 'VALVE_2') return 'Solenoid Valve 2';
+        if (targetStr === 'SYSTEM') return 'Sistem';
 
         return target;
     };
@@ -247,6 +253,9 @@ function HistoryPage() {
             label: 'Detail Eksekusi',
             width: '1fr',
             render: (_, log) => {
+                if (log.action === 'watering_summary') {
+                    return log.payload_sent?.message || '--';
+                }
                 const durationText =
                     log.duration_ms !== null && log.duration_ms !== undefined
                         ? `${log.duration_ms} ms`

@@ -4,7 +4,8 @@ import tailwindcss from '@tailwindcss/vite';
 
 // Konfigurasi target Backend (Hanya digunakan saat development lokal via 'npm run dev')
 // GANTILAH alamat IP/Port ini jika target backend development lokal Anda berubah:
-const BACKEND_HOST = '172.25.19.231:8000';
+// const BACKEND_HOST = '172.25.19.231:8000';
+const BACKEND_HOST = '172.25.20.47:8000';
 const BACKEND_HTTP = `http://${BACKEND_HOST}`;
 const BACKEND_WS = `ws://${BACKEND_HOST}`;
 
